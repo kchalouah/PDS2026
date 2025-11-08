@@ -1,4 +1,4 @@
-package com.sesame.p;
+package com.sesame.pds2026;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
