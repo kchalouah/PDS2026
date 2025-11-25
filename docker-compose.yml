@@ -29,30 +29,113 @@ services:
     ports:
       - "8080:8080"
 
-  backend:
+  config-service:
     build:
-      context: ./backend
-    image: medinsight-backend:latest
-    container_name: backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medinsight
-      SPRING_DATASOURCE_USERNAME: meduser
-      SPRING_DATASOURCE_PASSWORD: medpass
+      context: ./Backend/config-service
+    image: pds-config-service:latest
+    container_name: config-service
     ports:
-      - "8081:8080"
+      - "8888:8888"
+
+  gateway-service:
+    build:
+      context: ./Backend/gateway-service
+    image: pds-gateway-service:latest
+    container_name: gateway-service
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-service:8888
+    ports:
+      - "8087:8080"
     depends_on:
-      - postgres
+      - config-service
+
+  security-service:
+    build:
+      context: ./Backend/security-service
+    image: pds-security-service:latest
+    container_name: security-service
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-service:8888
+    ports:
+      - "8085:8085"
+    depends_on:
+      - config-service
       - keycloak
+
+  patient-service:
+    build:
+      context: ./Backend/patient-service
+    image: pds-patient-service:latest
+    container_name: patient-service
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-service:8888
+    ports:
+      - "8081:8081"
+    depends_on:
+      - config-service
+      - postgres
+
+  medecin-service:
+    build:
+      context: ./Backend/medecin-service
+    image: pds-medecin-service:latest
+    container_name: medecin-service
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-service:8888
+    ports:
+      - "8082:8082"
+    depends_on:
+      - config-service
+      - postgres
+
+  prediction-service:
+    build:
+      context: ./Backend/prediction-service
+    image: pds-prediction-service:latest
+    container_name: prediction-service
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-service:8888
+    ports:
+      - "8083:8083"
+    depends_on:
+      - config-service
+      - postgres
+
+  gestion-service:
+    build:
+      context: ./Backend/gestion-service
+    image: pds-gestion-service:latest
+    container_name: gestion-service
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-service:8888
+    ports:
+      - "8084:8084"
+    depends_on:
+      - config-service
+      - postgres
+
+  supervision-service:
+    build:
+      context: ./Backend/supervision-service
+    image: pds-supervision-service:latest
+    container_name: supervision-service
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-service:8888
+    ports:
+      - "8086:8086"
+    depends_on:
+      - config-service
+      - postgres
 
   frontend:
     build:
-      context: ./front/pdsfront
+      context: ./Front/pdsfront
     image: medinsight-frontend:latest
     container_name: frontend
     ports:
-      - "5173:80" # Le site React est servi via Nginx dans ce conteneur
+      - "5173:80"
     depends_on:
-      - backend
+      - gateway-service
 
   prometheus:
     image: prom/prometheus
