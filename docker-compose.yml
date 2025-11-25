@@ -1,81 +1,110 @@
-version: '3.9'
+name: CI-CD Pipeline with Infra
 
-services:
-  postgres:
-    image: postgres:15
-    container_name: postgres
-    environment:
-      POSTGRES_USER: meduser
-      POSTGRES_PASSWORD: medpass
-      POSTGRES_DB: medinsight
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
-  keycloak:
-    image: quay.io/keycloak/keycloak:24.0
-    container_name: keycloak
-    command: start-dev
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/medinsight
-      KC_DB_USERNAME: meduser
-      KC_DB_PASSWORD: medpass
-    depends_on:
-      - postgres
-    ports:
-      - "8080:8080"
+jobs:
+  build-and-push:
+    name: Build & Push Docker Images with Infra
+    runs-on: ubuntu-latest
 
-  backend:
-    build:
-      context: ./backend
-    image: medinsight-backend:latest
-    container_name: backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medinsight
-      SPRING_DATASOURCE_USERNAME: meduser
-      SPRING_DATASOURCE_PASSWORD: medpass
-    ports:
-      - "8081:8080"
-    depends_on:
-      - postgres
-      - keycloak
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: medinsight
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-  frontend:
-    build:
-      context: ./front/pdsfront
-    image: medinsight-frontend:latest
-    container_name: frontend
-    ports:
-      - "5173:80" # Le site React est servi via Nginx dans ce conteneur
-    depends_on:
-      - backend
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
 
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    volumes:
-      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - "9090:9090"
+      prometheus:
+        image: prom/prometheus:latest
+        ports:
+          - 9090:9090
 
-  grafana:
-    image: grafana/grafana
-    container_name: grafana
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
+      grafana:
+        image: grafana/grafana:latest
+        ports:
+          - 3000:3000
 
-volumes:
-  postgres_data:
-  grafana_data:
+      nginx:
+        image: nginx:latest
+        ports:
+          - 8080:80
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Backend
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Backend with Maven
+        working-directory: ./Backend
+        run: mvn clean package -DskipTests
+
+      # Frontend
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Frontend dependencies
+        working-directory: ./Front/pdsfront
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: ./Front/pdsfront
+        run: npm run build
+
+      # Docker login
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build & Push backend image
+      - name: Build & Push Backend Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/medinsight-backend:latest ./Backend
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/medinsight-backend:latest
+
+      # Build & Push frontend image
+      - name: Build & Push Frontend Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/medinsight-frontend:latest ./Front/pdsfront
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/medinsight-frontend:latest
+
+  docker-compose-update:
+    name: Update Containers via Docker Compose
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Docker Compose Pull & Up
+        run: |
+          docker-compose pull
+          docker-compose down
+          docker-compose up -d --build
