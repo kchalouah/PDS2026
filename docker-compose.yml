@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   postgres:
@@ -12,6 +12,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5433:5432"
+    networks:
+      - pds-net
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0
@@ -27,32 +29,9 @@ services:
     depends_on:
       - postgres
     ports:
-      - "8080:8080"
-
-  backend:
-    build:
-      context: ./backend
-    image: medinsight-backend:latest
-    container_name: backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medinsight
-      SPRING_DATASOURCE_USERNAME: meduser
-      SPRING_DATASOURCE_PASSWORD: medpass
-    ports:
-      - "8081:8080"
-    depends_on:
-      - postgres
-      - keycloak
-
-  frontend:
-    build:
-      context: ./Front/pdsfront
-    image: medinsight-frontend:latest
-    container_name: frontend
-    ports:
-      - "5173:80" # Le site React est servi via Nginx dans ce conteneur
-    depends_on:
-      - backend
+      - "8090:8090"
+    networks:
+      - pds-net
 
   prometheus:
     image: prom/prometheus
@@ -61,6 +40,8 @@ services:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
+    networks:
+      - pds-net
 
   grafana:
     image: grafana/grafana
@@ -75,7 +56,123 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+    networks:
+      - pds-net
+
+  # --- MICROSERVICES ---
+
+  config-service:
+    build:
+      context: ./backend/config-service
+      dockerfile: Dockerfile
+    container_name: config-service
+    ports:
+      - "8888:8888"
+    networks:
+      - pds-net
+
+  gateway-service:
+    build:
+      context: ./backend/gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    networks:
+      - pds-net
+    depends_on:
+      - config-service
+
+  gestion-service:
+    build:
+      context: ./backend/gestion-service
+      dockerfile: Dockerfile
+    container_name: gestion-service
+    networks:
+      - pds-net
+    depends_on:
+      - gateway-service
+
+  medecin-service:
+    build:
+      context: ./backend/medecin-service
+      dockerfile: Dockerfile
+    container_name: medecin-service
+    networks:
+      - pds-net
+    depends_on:
+      - gateway-service
+
+  patient-service:
+    build:
+      context: ./backend/patient-service
+      dockerfile: Dockerfile
+    container_name: patient-service
+    networks:
+      - pds-net
+    depends_on:
+      - gateway-service
+
+  prediction-service:
+    build:
+      context: ./backend/prediction-service
+      dockerfile: Dockerfile
+    container_name: prediction-service
+    networks:
+      - pds-net
+    depends_on:
+      - gateway-service
+
+  security-service:
+    build:
+      context: ./backend/security-service
+      dockerfile: Dockerfile
+    container_name: security-service
+    networks:
+      - pds-net
+    depends_on:
+      - gateway-service
+
+  supervision-service:
+    build:
+      context: ./backend/supervision-service
+      dockerfile: Dockerfile
+    container_name: supervision-service
+    networks:
+      - pds-net
+    depends_on:
+      - gateway-service
+
+  eureka-server:
+    build:
+      context: ./backend/eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - pds-net
+    depends_on:
+      - config-service
+
+  # --- FRONTEND ---
+
+  frontend:
+    build:
+      context: ./Front/pdsfront
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway-service
+    networks:
+      - pds-net
 
 volumes:
   postgres_data:
   grafana_data:
+
+networks:
+  pds-net:
+    driver: bridge
