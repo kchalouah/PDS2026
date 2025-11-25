@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+
+  config-service:
+    build: ./config-service
+    container_name: config-service
+    ports:
+      - "8888:8888"
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - config-service
+
+  gestion-service:
+    build: ./gestion-service
+    container_name: gestion-service
+    depends_on:
+      - config-service
+
+  medecin-service:
+    build: ./medecin-service
+    container_name: medecin-service
+    depends_on:
+      - config-service
+
+  patient-service:
+    build: ./patient-service
+    container_name: patient-service
+    depends_on:
+      - config-service
+
+  prediction-service:
+    build: ./prediction-service
+    container_name: prediction-service
+    depends_on:
+      - config-service
+
+  security-service:
+    build: ./security-service
+    container_name: security-service
+    depends_on:
+      - config-service
+
+  supervision-service:
+    build: ./supervision-service
+    container_name: supervision-service
+    depends_on:
+      - config-service
