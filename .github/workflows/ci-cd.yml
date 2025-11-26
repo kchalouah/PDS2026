@@ -1,4 +1,4 @@
-name: CI-CD Pipeline
+name: Build and Push Docker Images
 
 on:
   push:
@@ -8,7 +8,7 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
-  build-and-push-microservices:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -29,59 +29,55 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Build and push each microservice image
+      # Backend microservices
       - name: Build and push config-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/config-service:latest ./Backend/config-service
+          docker build -t $DOCKERHUB_USERNAME/config-service:latest ./backend/config-service
           docker push $DOCKERHUB_USERNAME/config-service:latest
 
       - name: Build and push eureka-server
         run: |
-          docker build -t $DOCKERHUB_USERNAME/eureka-server:latest ./Backend/eureka-server
+          docker build -t $DOCKERHUB_USERNAME/eureka-server:latest ./backend/eureka-server
           docker push $DOCKERHUB_USERNAME/eureka-server:latest
 
       - name: Build and push gateway-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/gateway-service:latest ./Backend/gateway-service
+          docker build -t $DOCKERHUB_USERNAME/gateway-service:latest ./backend/gateway-service
           docker push $DOCKERHUB_USERNAME/gateway-service:latest
 
       - name: Build and push gestion-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/gestion-service:latest ./Backend/gestion-service
+          docker build -t $DOCKERHUB_USERNAME/gestion-service:latest ./backend/gestion-service
           docker push $DOCKERHUB_USERNAME/gestion-service:latest
 
       - name: Build and push medecin-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/medecin-service:latest ./Backend/medecin-service
+          docker build -t $DOCKERHUB_USERNAME/medecin-service:latest ./backend/medecin-service
           docker push $DOCKERHUB_USERNAME/medecin-service:latest
 
       - name: Build and push patient-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/patient-service:latest ./Backend/patient-service
+          docker build -t $DOCKERHUB_USERNAME/patient-service:latest ./backend/patient-service
           docker push $DOCKERHUB_USERNAME/patient-service:latest
 
       - name: Build and push prediction-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/prediction-service:latest ./Backend/prediction-service
+          docker build -t $DOCKERHUB_USERNAME/prediction-service:latest ./backend/prediction-service
           docker push $DOCKERHUB_USERNAME/prediction-service:latest
 
       - name: Build and push security-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/security-service:latest ./Backend/security-service
+          docker build -t $DOCKERHUB_USERNAME/security-service:latest ./backend/security-service
           docker push $DOCKERHUB_USERNAME/security-service:latest
 
       - name: Build and push supervision-service
         run: |
-          docker build -t $DOCKERHUB_USERNAME/supervision-service:latest ./Backend/supervision-service
+          docker build -t $DOCKERHUB_USERNAME/supervision-service:latest ./backend/supervision-service
           docker push $DOCKERHUB_USERNAME/supervision-service:latest
 
-  # Build frontend separately as before
-  build-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      # Frontend
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -96,20 +92,4 @@ jobs:
       - name: Build and push frontend Docker image
         run: |
           docker build -t $DOCKERHUB_USERNAME/medinsight-frontend:latest ./Front/pdsfront
-          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_TOKEN }}
           docker push $DOCKERHUB_USERNAME/medinsight-frontend:latest
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [build-and-push-microservices, build-frontend]
-    steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.1.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-            cd ${{ secrets.SERVER_PATH }}
-            docker compose pull
-            docker compose up -d --remove-orphans

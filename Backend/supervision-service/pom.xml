@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.Sesame</groupId>          <!-- groupId de ton pom parent -->
-        <artifactId>pds2026-parent</artifactId> <!-- artifactId de ton pom parent -->
-        <version>0.0.1-SNAPSHOT</version>      <!-- version de ton pom parent -->
-        <relativePath>../pom.xml</relativePath> <!-- chemin relatif vers le pom parent -->
+        <groupId>com.Sesame</groupId>
+        <artifactId>pds2026-parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>com.sesame.pds2026</groupId>
@@ -19,20 +19,8 @@
 
     <properties>
         <java.version>17</java.version>
-        <spring-cloud.version>2023.0.5</spring-cloud.version>
+        <!-- spring-cloud.version géré dans parent -->
     </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -48,6 +36,12 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- Tests -->
@@ -98,6 +92,4 @@
             </plugin>
         </plugins>
     </build>
-
-
 </project>

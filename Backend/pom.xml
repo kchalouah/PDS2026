@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
@@ -23,7 +24,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot dependencies -->
+            <!-- Spring Boot dependencies BOM -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -32,7 +33,7 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Spring Cloud dependencies -->
+            <!-- Spring Cloud dependencies BOM -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -40,8 +41,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- TestNG dependency version management -->
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>7.8.0</version> <!-- Choisis la version qui te convient -->
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
+
 
     <build>
         <pluginManagement>
@@ -81,6 +91,7 @@
             </plugins>
         </pluginManagement>
     </build>
+
     <modules>
         <module>config-service</module>
         <module>gateway-service</module>
@@ -90,6 +101,6 @@
         <module>prediction-service</module>
         <module>security-service</module>
         <module>supervision-service</module>
-        <module>eureka-server</module>   <!-- NOUVEAU -->
+        <module>eureka-server</module>
     </modules>
 </project>
