@@ -1,5 +1,7 @@
-FROM eclipse-temurin:17-jdk-jammy
+FROM eclipse-temurin:17-jdk
 WORKDIR /app
-COPY target/*.jar app.jar
+# Expect a prebuilt jar at eureka-server/target/*.jar. Build locally if missing:
+#   mvn -q -f eureka-server/pom.xml clean package -DskipTests
+COPY eureka-server/target/*.jar app.jar
 EXPOSE 8761
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

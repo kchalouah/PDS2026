@@ -1,178 +1,309 @@
-  version: "3.9"
-  
-  services:
-    postgres:
-      image: postgres:15
-      container_name: postgres
-      environment:
-        POSTGRES_USER: meduser
-        POSTGRES_PASSWORD: medpass
-        POSTGRES_DB: medinsight
-      volumes:
-        - postgres_data:/var/lib/postgresql/data
-      ports:
-        - "5433:5432"
-      networks:
-        - pds-net
-  
-    keycloak:
-      image: quay.io/keycloak/keycloak:24.0
-      container_name: keycloak
-      command: start-dev
-      environment:
-        KEYCLOAK_ADMIN: admin
-        KEYCLOAK_ADMIN_PASSWORD: admin
-        KC_DB: postgres
-        KC_DB_URL: jdbc:postgresql://postgres:5432/medinsight
-        KC_DB_USERNAME: meduser
-        KC_DB_PASSWORD: medpass
-      depends_on:
-        - postgres
-      ports:
-        - "8090:8090"
-      networks:
-        - pds-net
-  
-    prometheus:
-      image: prom/prometheus
-      container_name: prometheus
-      volumes:
-        - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      ports:
-        - "9090:9090"
-      networks:
-        - pds-net
-  
-    grafana:
-      image: grafana/grafana
-      container_name: grafana
-      environment:
-        GF_SECURITY_ADMIN_USER: admin
-        GF_SECURITY_ADMIN_PASSWORD: admin
-      volumes:
-        - grafana_data:/var/lib/grafana
-        - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
-      ports:
-        - "3000:3000"
-      depends_on:
-        - prometheus
-      networks:
-        - pds-net
-  
-    # --- MICROSERVICES ---
-  
-    config-service:
-      build:
-        context: ./backend/config-service
-        dockerfile: Dockerfile
-      container_name: config-service
-      ports:
-        - "8888:8888"
-      networks:
-        - pds-net
-  
-    gateway-service:
-      build:
-        context: ./backend/gateway-service
-        dockerfile: Dockerfile
-      container_name: gateway-service
-      ports:
-        - "8080:8080"
-      networks:
-        - pds-net
-      depends_on:
-        - config-service
-  
-    gestion-service:
-      build:
-        context: ./backend/gestion-service
-        dockerfile: Dockerfile
-      container_name: gestion-service
-      networks:
-        - pds-net
-      depends_on:
-        - gateway-service
-  
-    medecin-service:
-      build:
-        context: ./backend/medecin-service
-        dockerfile: Dockerfile
-      container_name: medecin-service
-      networks:
-        - pds-net
-      depends_on:
-        - gateway-service
-  
-    patient-service:
-      build:
-        context: ./backend/patient-service
-        dockerfile: Dockerfile
-      container_name: patient-service
-      networks:
-        - pds-net
-      depends_on:
-        - gateway-service
-  
-    prediction-service:
-      build:
-        context: ./backend/prediction-service
-        dockerfile: Dockerfile
-      container_name: prediction-service
-      networks:
-        - pds-net
-      depends_on:
-        - gateway-service
-  
-    security-service:
-      build:
-        context: ./backend/security-service
-        dockerfile: Dockerfile
-      container_name: security-service
-      networks:
-        - pds-net
-      depends_on:
-        - gateway-service
-  
-    supervision-service:
-      build:
-        context: ./backend/supervision-service
-        dockerfile: Dockerfile
-      container_name: supervision-service
-      networks:
-        - pds-net
-      depends_on:
-        - gateway-service
-  
-    eureka-server:
-      build:
-        context: ./backend/eureka-server
-        dockerfile: Dockerfile
-      container_name: eureka-server
-      ports:
-        - "8761:8761"
-      networks:
-        - pds-net
-      depends_on:
-        - config-service
-  
-    # --- FRONTEND ---
-  
-    frontend:
-      build:
-        context: ./Front/pdsfront
-        dockerfile: Dockerfile
-      container_name: frontend
-      ports:
-        - "5173:80"
-      depends_on:
-        - gateway-service
-      networks:
-        - pds-net
-  
-  volumes:
-    postgres_data:
-    grafana_data:
-  
-  networks:
-    pds-net:
-      driver: bridge
+services:
+  # ============================
+  # PostgreSQL
+  # ============================
+  postgres:
+    image: postgres:15-alpine
+    container_name: medinsight-postgres
+    environment:
+      POSTGRES_DB: medinsight
+      POSTGRES_USER: meduser
+      POSTGRES_PASSWORD: MedSecurePass2024!
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Eureka Server
+  # ============================
+  eureka-server:
+    build:
+      context: ./Backend
+      dockerfile: ./eureka-server/Dockerfile
+    container_name: medinsight-eureka
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Config Server (FIXED)
+  # ============================
+  config-service:
+    build:
+      context: ./Backend
+      dockerfile: ./config-service/Dockerfile
+    container_name: medinsight-config
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=native      # FIX → native mode works
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Gateway Service
+  # ============================
+  gateway-service:
+    build:
+      context: ./Backend
+      dockerfile: ./gateway-service/Dockerfile
+    container_name: medinsight-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - KEYCLOAK_HOST=keycloak
+    depends_on:
+      - config-service
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Patient Service
+  # ============================
+  patient-service:
+    build:
+      context: ./Backend
+      dockerfile: ./patient-service/Dockerfile
+    container_name: medinsight-patient
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - POSTGRES_USER=meduser
+      - POSTGRES_PASSWORD=MedSecurePass2024!
+      - POSTGRES_DB=medinsight
+    depends_on:
+      - postgres
+      - config-service
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Medecin Service
+  # ============================
+  medecin-service:
+    build:
+      context: ./Backend
+      dockerfile: ./medecin-service/Dockerfile
+    container_name: medinsight-medecin
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - POSTGRES_USER=meduser
+      - POSTGRES_PASSWORD=MedSecurePass2024!
+      - POSTGRES_DB=medinsight
+    depends_on:
+      - postgres
+      - config-service
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Prediction Service
+  # ============================
+  prediction-service:
+    build:
+      context: ./Backend
+      dockerfile: ./prediction-service/Dockerfile
+    container_name: medinsight-prediction
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - POSTGRES_USER=meduser
+      - POSTGRES_PASSWORD=MedSecurePass2024!
+      - POSTGRES_DB=medinsight
+    depends_on:
+      - postgres
+      - config-service
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Gestion Service
+  # ============================
+  gestion-service:
+    build:
+      context: ./Backend
+      dockerfile: ./gestion-service/Dockerfile
+    container_name: medinsight-gestion
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - POSTGRES_USER=meduser
+      - POSTGRES_PASSWORD=MedSecurePass2024!
+      - POSTGRES_DB=medinsight
+    depends_on:
+      - postgres
+      - config-service
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Security Service
+  # ============================
+  security-service:
+    build:
+      context: ./Backend
+      dockerfile: ./security-service/Dockerfile
+    container_name: medinsight-security
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - DB_HOST=postgres
+      - POSTGRES_USER=meduser
+      - POSTGRES_PASSWORD=MedSecurePass2024!
+      - POSTGRES_DB=medinsight
+      - JWT_SECRET=MedInsightJWTSecretKeyForTokenGeneration2024VeryLongAndSecure!
+      - JWT_EXPIRATION=86400000
+      - KEYCLOAK_CLIENT_SECRET=security-secret
+      - KEYCLOAK_HOST=keycloak
+    depends_on:
+      - postgres
+      - config-service
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Supervision Service
+  # ============================
+  supervision-service:
+    build:
+      context: ./Backend
+      dockerfile: ./supervision-service/Dockerfile
+    container_name: medinsight-supervision
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    depends_on:
+      - config-service
+      - eureka-server
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Keycloak
+  # ============================
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: medinsight-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: KeycloakAdmin2024!
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/medinsight
+      KC_DB_USERNAME: meduser
+      KC_DB_PASSWORD: MedSecurePass2024!
+      KC_HOSTNAME: localhost
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+    command: start-dev
+    ports:
+      - "8180:8080"
+    depends_on:
+      - postgres
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Prometheus
+  # ============================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: medinsight-prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Grafana
+  # ============================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: medinsight-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: GrafanaAdmin2024!
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - medinsight-network
+
+  # ============================
+  # FRONTEND (fix)
+  # ============================
+  frontend:
+    build:
+      context: ./Front/pdsfront
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+        NEXT_PUBLIC_BASE_PATH: ""
+    container_name: frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - INTERNAL_API_URL=http://gateway-service:8080
+      - PORT=3000
+    ports:
+      - "5173:3000"  # 5173 (host) → 3000 (Next.js in container)
+    depends_on:
+      - gateway-service
+    networks:
+      - medinsight-network
+
+# ============================
+# Networks & Volumes
+# ============================
+networks:
+  medinsight-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

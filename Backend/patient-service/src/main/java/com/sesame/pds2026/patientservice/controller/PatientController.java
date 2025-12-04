@@ -1,43 +1,37 @@
 package com.sesame.pds2026.patientservice.controller;
 
-import com.sesame.pds2026.patientservice.entity.Patient;
+import com.sesame.pds2026.patientservice.model.Patient;
 import com.sesame.pds2026.patientservice.service.PatientService;
-import org.springframework.http.ResponseEntity;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/patients")
 public class PatientController {
-    private final PatientService service;
-    public PatientController(PatientService service) { this.service = service; }
+
+    @Autowired
+    private PatientService patientService;
 
     @PostMapping
-    public ResponseEntity<Patient> create(@RequestBody Patient patient) {
-        Patient created = service.create(patient);
-        return ResponseEntity.created(URI.create("/api/patients/" + created.getId())).body(created);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Patient> get(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getById(id));
+    public Patient createPatient(@Valid @RequestBody Patient patient) {
+        return patientService.createPatient(patient);
     }
 
     @GetMapping
-    public ResponseEntity<List<Patient>> list() {
-        return ResponseEntity.ok(service.getAll());
+    public List<Patient> getAllPatients() {
+        return patientService.getAllPatients();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Patient> update(@PathVariable Long id, @RequestBody Patient patient) {
-        return ResponseEntity.ok(service.update(id, patient));
+    @GetMapping("/{id}")
+    public Patient getPatientById(@PathVariable Long id) {
+        return patientService.getPatientById(id);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        service.delete(id);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/user/{userId}")
+    public Patient getPatientByUserId(@PathVariable Long userId) {
+        return patientService.getPatientByUserId(userId);
     }
 }

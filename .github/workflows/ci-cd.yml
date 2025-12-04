@@ -131,3 +131,4 @@ jobs:
         run: |
           docker build -t $DOCKERHUB_USERNAME/medinsight-frontend:latest ./Front/pdsfront
           docker push $DOCKERHUB_USERNAME/medinsight-frontend:latest
+0

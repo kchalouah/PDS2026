@@ -1,0 +1,38 @@
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: patient-service
+          uri: lb://patient-service
+          predicates:
+            - Path=/api/patients/**,/api/dossiers/**,/api/appointments/**
+        - id: medecin-service
+          uri: lb://medecin-service
+          predicates:
+            - Path=/api/medecins/**, /api/diagnostics/**, /api/reports/**
+        - id: security-service
+          uri: lb://security-service
+          predicates:
+            - Path=/api/auth/**,/api/users/**,/api/audit/**,/api/security-officers/**
+        - id: gestion-service
+          uri: lb://gestion-service
+          predicates:
+            - Path=/api/gestion/**,/api/managers/**
+        - id: supervision-service
+          uri: lb://supervision-service
+          predicates:
+            - Path=/api/supervision/**
+        - id: prediction-service
+          uri: lb://prediction-service
+          predicates:
+            - Path=/api/predictions/**
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://${KEYCLOAK_HOST:keycloak}:8080/realms/medinsight
+          jwk-set-uri: http://${KEYCLOAK_HOST:keycloak}:8080/realms/medinsight/protocol/openid-connect/certs
