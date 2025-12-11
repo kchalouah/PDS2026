@@ -3,7 +3,7 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true
+          enabled: false
           lower-case-service-id: true
       routes:
         - id: patient-service
@@ -13,7 +13,7 @@ spring:
         - id: medecin-service
           uri: lb://medecin-service
           predicates:
-            - Path=/api/medecins/**, /api/diagnostics/**, /api/reports/**
+            - Path=/api/medecins/**,/api/diagnostics/**,/api/reports/**,/api/prescriptions/**,/api/planning/**
         - id: security-service
           uri: lb://security-service
           predicates:
@@ -30,9 +30,63 @@ spring:
           uri: lb://prediction-service
           predicates:
             - Path=/api/predictions/**
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://${KEYCLOAK_HOST:keycloak}:8080/realms/medinsight
-          jwk-set-uri: http://${KEYCLOAK_HOST:keycloak}:8080/realms/medinsight/protocol/openid-connect/certs
+        # Swagger UI Routes
+        - id: patient-swagger
+          uri: lb://patient-service
+          predicates:
+            - Path=/patient-service/v3/api-docs/**,/patient-service/swagger-ui/**
+          filters:
+            - RewritePath=/patient-service/(?<segment>.*), /$\{segment}
+        - id: medecin-swagger
+          uri: lb://medecin-service
+          predicates:
+            - Path=/medecin-service/v3/api-docs/**,/medecin-service/swagger-ui/**
+          filters:
+            - RewritePath=/medecin-service/(?<segment>.*), /$\{segment}
+        - id: security-swagger
+          uri: lb://security-service
+          predicates:
+            - Path=/security-service/v3/api-docs/**,/security-service/swagger-ui/**
+          filters:
+            - RewritePath=/security-service/(?<segment>.*), /$\{segment}
+        - id: gestion-swagger
+          uri: lb://gestion-service
+          predicates:
+            - Path=/gestion-service/v3/api-docs/**,/gestion-service/swagger-ui/**
+          filters:
+            - RewritePath=/gestion-service/(?<segment>.*), /$\{segment}
+        - id: supervision-swagger
+          uri: lb://supervision-service
+          predicates:
+            - Path=/supervision-service/v3/api-docs/**,/supervision-service/swagger-ui/**
+          filters:
+            - RewritePath=/supervision-service/(?<segment>.*), /$\{segment}
+        - id: prediction-swagger
+          uri: lb://prediction-service
+          predicates:
+            - Path=/prediction-service/v3/api-docs/**,/prediction-service/swagger-ui/**
+          filters:
+            - RewritePath=/prediction-service/(?<segment>.*), /$\{segment}
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: 
+              - "http://localhost:5173"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes,loggers,prometheus
+

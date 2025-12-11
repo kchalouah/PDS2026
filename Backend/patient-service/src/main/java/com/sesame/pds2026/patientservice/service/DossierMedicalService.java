@@ -1,7 +1,7 @@
 package com.sesame.pds2026.patientservice.service;
 
 import com.sesame.pds2026.patientservice.model.DossierMedical;
-import com.sesame.pds2026.patientservice.repository.DossierMedicalRepository;
+import com.sesame.pds2026.patientservice.Repository.DossierMedicalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

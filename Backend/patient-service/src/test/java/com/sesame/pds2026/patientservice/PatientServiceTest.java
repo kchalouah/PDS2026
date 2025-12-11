@@ -1,7 +1,7 @@
 package com.sesame.pds2026.patientservice;
 
 import com.sesame.pds2026.patientservice.model.Patient;
-import com.sesame.pds2026.patientservice.repository.PatientRepository;
+import com.sesame.pds2026.patientservice.Repository.PatientRepository;
 import com.sesame.pds2026.patientservice.service.PatientService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

@@ -4,6 +4,7 @@ import com.sesame.pds2026.patientservice.model.Patient;
 import com.sesame.pds2026.patientservice.service.PatientService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

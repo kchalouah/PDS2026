@@ -1,0 +1,126 @@
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Static Routes for Swagger UI (Redirection to microservices)
+        - id: patient-swagger
+          uri: lb://patient-service
+          predicates:
+            - Path=/swagger/patient/**
+          filters:
+            - RewritePath=/swagger/patient/(?<segment>.*), /swagger-ui/index.html
+            
+        - id: medecin-swagger
+          uri: lb://medecin-service
+          predicates:
+            - Path=/swagger/medecin/**
+          filters:
+            - RewritePath=/swagger/medecin/(?<segment>.*), /swagger-ui/index.html
+
+        - id: prediction-swagger
+          uri: lb://prediction-service
+          predicates:
+            - Path=/swagger/prediction/**
+          filters:
+            - RewritePath=/swagger/prediction/(?<segment>.*), /swagger-ui/index.html
+
+        - id: gestion-swagger
+          uri: lb://gestion-service
+          predicates:
+            - Path=/swagger/gestion/**
+          filters:
+            - RewritePath=/swagger/gestion/(?<segment>.*), /swagger-ui/index.html
+
+        - id: security-swagger
+          uri: lb://security-service
+          predicates:
+            - Path=/swagger/security/**
+          filters:
+            - RewritePath=/swagger/security/(?<segment>.*), /swagger-ui/index.html
+
+        - id: supervision-swagger
+          uri: lb://supervision-service
+          predicates:
+            - Path=/swagger/supervision/**
+          filters:
+            - RewritePath=/swagger/supervision/(?<segment>.*), /swagger-ui/index.html
+
+        # OpenAPI Docs Routes (for aggregation if needed, or direct access)
+        - id: patient-api-docs
+          uri: lb://patient-service
+          predicates:
+            - Path=/patient-service/v3/api-docs/**
+
+        - id: medecin-api-docs
+          uri: lb://medecin-service
+          predicates:
+            - Path=/medecin-service/v3/api-docs/**
+            
+        - id: prediction-api-docs
+          uri: lb://prediction-service
+          predicates:
+            - Path=/prediction-service/v3/api-docs/**
+
+        - id: gestion-api-docs
+          uri: lb://gestion-service
+          predicates:
+            - Path=/gestion-service/v3/api-docs/**
+
+        - id: security-api-docs
+          uri: lb://security-service
+          predicates:
+            - Path=/security-service/v3/api-docs/**
+
+        - id: supervision-api-docs
+          uri: lb://supervision-service
+          predicates:
+            - Path=/supervision-service/v3/api-docs/**
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: 
+              - "http://localhost:5173"
+              - "http://localhost:3000"
+              - "https://medinsight.app"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+
+  # Security Configuration (Resource Server)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER:http://localhost:8180/realms/medinsight}
+          jwk-set-uri: ${KEYCLOAK_JWKS_URL:http://keycloak:8080/realms/medinsight/protocol/openid-connect/certs}
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,routes,prometheus

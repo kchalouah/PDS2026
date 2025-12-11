@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: security-service
   datasource:
     url: jdbc:postgresql://${DB_HOST:postgres}:5432/${POSTGRES_DB:medinsight}
     username: ${POSTGRES_USER:meduser}
@@ -13,18 +15,27 @@ spring:
     oauth2:
       client:
         registration:
-          keycloak:
-            client-id: security-service
-            client-secret: ${KEYCLOAK_CLIENT_SECRET}
-            scope: openid,profile,email
-            authorization-grant-type: client_credentials
-        provider:
-          keycloak:
-            issuer-uri: http://${KEYCLOAK_HOST:keycloak}:8080/realms/medinsight
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
+            scope: profile,email
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+          github:
+            client-id: ${GITHUB_CLIENT_ID:placeholder}
+            client-secret: ${GITHUB_CLIENT_SECRET:placeholder}
+            scope: read:user,user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/github"
 
 jwt:
-  secret: ${JWT_SECRET}
-  expiration: ${JWT_EXPIRATION:86400000}
+  secret: ${JWT_SECRET:mySecretKey123456789012345678901234567890}
+  expiration: 86400000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
 
 management:
   endpoints:

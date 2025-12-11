@@ -1,7 +1,7 @@
 package com.sesame.pds2026.patientservice.service;
 
 import com.sesame.pds2026.patientservice.model.Appointment;
-import com.sesame.pds2026.patientservice.repository.AppointmentRepository;
+import com.sesame.pds2026.patientservice.Repository.AppointmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
