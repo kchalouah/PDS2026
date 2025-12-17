@@ -394,6 +394,11 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8080
       - INTERNAL_API_URL=http://gateway-service:8080
       - PORT=3000
+      # Internal URLs for Server-Side API Routes (Next.js Server -> Backend Containers)
+      - KEYCLOAK_URL=http://keycloak:8080
+      - PATIENT_SERVICE_URL=http://patient-service:8080
+      - MEDECIN_SERVICE_URL=http://medecin-service:8080
+      - GESTION_SERVICE_URL=http://gestion-service:8080
     ports:
       - "5173:3000"
     depends_on:
