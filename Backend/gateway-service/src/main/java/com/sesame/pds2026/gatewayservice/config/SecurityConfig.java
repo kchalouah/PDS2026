@@ -17,7 +17,7 @@ public class SecurityConfig {
             .authorizeExchange(exchanges -> exchanges
                 // Public Endpoints
                 .pathMatchers("/actuator/**").permitAll()
-                .pathMatchers("/swagger/**").permitAll()
+                .pathMatchers("/*/swagger-ui/**").permitAll()
                 .pathMatchers("/*/v3/api-docs/**").permitAll()
                 .pathMatchers("/webjars/**").permitAll()
                 // Allow OPTIONS for CORS

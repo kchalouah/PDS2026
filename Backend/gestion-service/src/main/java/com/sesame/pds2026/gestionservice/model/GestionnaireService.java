@@ -1,17 +1,17 @@
-package com.sesame.pds2026.medecinservice.model;
+package com.sesame.pds2026.gestionservice.model;
 
-import com.sesame.pds2026.medecinservice.model.common.ProfileInfo;
+import com.sesame.pds2026.gestionservice.model.common.ProfileInfo;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "medecins")
+@Table(name = "gestionnaires")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Medecin {
+public class GestionnaireService {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,11 +25,9 @@ public class Medecin {
     @Embedded
     private ProfileInfo profile;
     
-    private String role = "MEDECIN";
+    private String role = "GESTIONNAIRE";
 
-    // Medecin-specific fields
-    private String specialite;
-    private String hospitalName;
-    private String department;
-    private boolean isAvailable = true;
+    // Management-specific fields
+    private String departement;
+    private String serviceArea;
 }

@@ -1,11 +1,10 @@
 package com.sesame.pds2026.patientservice.model;
 
-import jakarta.persistence.*;
+import com.sesame.pds2026.patientservice.model.common.ProfileInfo;
+import jakarta.persistence.*; 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "patients")
@@ -17,14 +16,19 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // Link to User in Security Service
+    private Long userId; // Link to Keycloak user
 
-    private String firstName;
-    private String lastName;
-    private LocalDate dateOfBirth;
-    private String address;
+    private String nom;
+    private String prenom;
+    private String email;
+    
+    @Embedded
+    private ProfileInfo profile;
+    
+    private String role = "PATIENT";
+
+    // Patient-specific fields
     private String gender;
-    private String phoneNumber;
     private String emergencyContact;
 
     @OneToOne(mappedBy = "patient", cascade = CascadeType.ALL)

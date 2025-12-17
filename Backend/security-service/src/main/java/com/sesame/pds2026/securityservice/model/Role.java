@@ -1,8 +1,9 @@
 package com.sesame.pds2026.securityservice.model;
 
 public enum Role {
+    ADMIN,
     PATIENT,
     MEDECIN,
-    MANAGER,
-    SECURITY_OFFICER
+    RESPONSABLE_SECURITE,
+    GESTIONNAIRE
 }

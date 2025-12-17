@@ -22,6 +22,23 @@ services:
       retries: 5
 
   # ============================
+  # pgAdmin
+  # ============================
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: medinsight-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@medinsight.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medinsight-network
+
+  # ============================
   # Eureka Server
   # ============================
   eureka-server:
@@ -100,7 +117,7 @@ services:
       dockerfile: ./patient-service/Dockerfile
     container_name: medinsight-patient
     ports:
-      - "8081:8081"
+      - "8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_APPLICATION_NAME=patient-service
@@ -130,7 +147,7 @@ services:
       dockerfile: ./medecin-service/Dockerfile
     container_name: medinsight-medecin
     ports:
-      - "8082:8082"
+      - "8082:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_APPLICATION_NAME=medecin-service
@@ -190,7 +207,7 @@ services:
       dockerfile: ./gestion-service/Dockerfile
     container_name: medinsight-gestion
     ports:
-      - "8084:8084"
+      - "8084:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_APPLICATION_NAME=gestion-service
@@ -220,7 +237,7 @@ services:
       dockerfile: ./security-service/Dockerfile
     container_name: medinsight-security
     ports:
-      - "8085:8085"
+      - "8085:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_APPLICATION_NAME=security-service
@@ -246,13 +263,23 @@ services:
     networks:
       - medinsight-network
 
+  ml-service:
+    build:
+      context: ./Backend/ml-service
+      dockerfile: Dockerfile
+    container_name: medinsight-ml
+    ports:
+      - "8000:8000"
+    networks:
+      - medinsight-network
+
   supervision-service:
     build:
       context: ./Backend
       dockerfile: ./supervision-service/Dockerfile
     container_name: medinsight-supervision
     ports:
-      - "8086:8086"
+      - "8086:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_APPLICATION_NAME=supervision-service
@@ -324,6 +351,31 @@ services:
       - ./infra/grafana/provisioning:/etc/grafana/provisioning
     ports:
       - "3000:3000"
+    networks:
+      - medinsight-network
+
+  # ============================
+  # Notification Service
+  # ============================
+  notification-service:
+    build:
+      context: ./Backend
+      dockerfile: ./notification-service/Dockerfile
+    container_name: medinsight-notification
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_APPLICATION_NAME=notification-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+      - KEYCLOAK_ISSUER=http://keycloak:8080/realms/medinsight
+      - KEYCLOAK_JWKS_URL=http://keycloak:8080/realms/medinsight/protocol/openid-connect/certs
+      # Connect to host machine for development mail server or a container
+      - SPRING_MAIL_HOST=host.docker.internal
+      - SPRING_MAIL_PORT=1025
+    depends_on:
+      - eureka-server
+      - keycloak
     networks:
       - medinsight-network
 

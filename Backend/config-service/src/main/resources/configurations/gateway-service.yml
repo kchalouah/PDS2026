@@ -67,6 +67,16 @@ spring:
             - Path=/prediction-service/v3/api-docs/**,/prediction-service/swagger-ui/**
           filters:
             - RewritePath=/prediction-service/(?<segment>.*), /$\{segment}
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+        - id: notification-swagger
+          uri: lb://notification-service
+          predicates:
+            - Path=/notification-service/v3/api-docs/**,/notification-service/swagger-ui/**
+          filters:
+            - RewritePath=/notification-service/(?<segment>.*), /$\{segment}
 
       globalcors:
         corsConfigurations:

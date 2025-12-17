@@ -40,37 +40,53 @@ docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create realms -s real
 
 # 3. Create Client
 Write-Host "Creating Client 'medinsight-client'..."
-docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create clients -r medinsight -s clientId=medinsight-client -s enabled=true -s "redirectUris=[\"*\"]" -s "webOrigins=[\"*\"]" -s publicClient=true -s standardFlowEnabled=true -o
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create clients -r medinsight -s clientId=medinsight-client -s enabled=true -s "redirectUris=[\"*\"]" -s "webOrigins=[\"*\"]" -s publicClient=true -s standardFlowEnabled=true -s directAccessGrantsEnabled=true -o
 
 # 4. Create Roles
 Write-Host "Creating Roles..."
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create roles -r medinsight -s name=ADMIN
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create roles -r medinsight -s name=PATIENT
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create roles -r medinsight -s name=MEDECIN
-docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create roles -r medinsight -s name=SECURITY_OFFICER
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create roles -r medinsight -s name=RESPONSABLE_SECURITE
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create roles -r medinsight -s name=GESTIONNAIRE
 
 # 5. Create Users
 Write-Host "Creating Users..."
 
-# Super Admin
-docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=superadmin -s enabled=true
+# Super Admin (All Roles)
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=superadmin -s enabled=true -s email=admin@medinsight.com
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh set-password -r medinsight --username superadmin --new-password admin
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh add-roles -r medinsight --uusername superadmin --rolename ADMIN
-docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh add-roles -r medinsight --uusername superadmin --rolename SECURITY_OFFICER
 
 # Patient (Karim)
-docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=karim -s enabled=true -s email=karim@test.com
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=karim -s enabled=true -s email=karim@test.com -s firstName=Karim -s lastName=Patient
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh set-password -r medinsight --username karim --new-password 1234
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh add-roles -r medinsight --uusername karim --rolename PATIENT
 
 # Doctor
-docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=doctor1 -s enabled=true
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=doctor1 -s enabled=true -s email=doctor@medinsight.com -s firstName=Dr -s lastName=Smith
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh set-password -r medinsight --username doctor1 --new-password 1234
 docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh add-roles -r medinsight --uusername doctor1 --rolename MEDECIN
+
+# Security Officer
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=securite1 -s enabled=true -s email=securite@medinsight.com -s firstName=Jean -s lastName=Securite
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh set-password -r medinsight --username securite1 --new-password 1234
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh add-roles -r medinsight --uusername securite1 --rolename RESPONSABLE_SECURITE
+
+# Service Manager
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh create users -r medinsight -s username=gestionnaire1 -s enabled=true -s email=gestionnaire@medinsight.com -s firstName=Marie -s lastName=Gestionnaire
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh set-password -r medinsight --username gestionnaire1 --new-password 1234
+docker exec medinsight-keycloak /opt/keycloak/bin/kcadm.sh add-roles -r medinsight --uusername gestionnaire1 --rolename GESTIONNAIRE
 
 Write-Host "---------------------------------------------------" -ForegroundColor Green
 Write-Host "Keycloak configured successfully!" -ForegroundColor Green
 Write-Host "Realm: medinsight"
 Write-Host "Client: medinsight-client"
-Write-Host "Users: superadmin (admin), karim (1234), doctor1 (1234)"
+Write-Host ""
+Write-Host "Users created:"
+Write-Host "  - superadmin (password: admin) - Role: ADMIN"
+Write-Host "  - karim (password: 1234) - Role: PATIENT"
+Write-Host "  - doctor1 (password: 1234) - Role: MEDECIN"
+Write-Host "  - securite1 (password: 1234) - Role: RESPONSABLE_SECURITE"
+Write-Host "  - gestionnaire1 (password: 1234) - Role: GESTIONNAIRE"
 Write-Host "---------------------------------------------------"
