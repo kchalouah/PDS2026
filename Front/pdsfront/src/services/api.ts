@@ -116,54 +116,51 @@ export const userService = {
   },
 };
 
+// --- Patient Service ---
 export const patientService = {
-  createPatient: async (patientData: any) => {
-    const response = await api.post('/api/patients', patientData);
-    return response.data;
-  },
-
-  getAllPatients: async () => {
-    const response = await api.get('/api/patients');
-    return response.data;
-  },
-
   getPatientById: async (id: number) => {
     const response = await api.get(`/api/patients/${id}`);
     return response.data;
   },
-
   getPatientByUserId: async (userId: number) => {
     const response = await api.get(`/api/patients/user/${userId}`);
+    return response.data;
+  },
+  createPatient: async (patient: any) => {
+    const response = await api.post('/api/patients', patient);
+    return response.data;
+  },
+  getAllPatients: async () => {
+    const response = await api.get('/api/patients');
+    return response.data;
+  },
+  updatePatient: async (id: number, patientData: any) => {
+    const response = await api.put(`/api/patients/${id}`, patientData);
     return response.data;
   },
 };
 
 export const appointmentService = {
-  createAppointment: async (appointmentData: any) => {
-    const response = await api.post('/api/appointments', appointmentData);
-    return response.data;
-  },
-
   getAllAppointments: async () => {
     const response = await api.get('/api/appointments');
     return response.data;
   },
-
   getAppointmentsByPatient: async (patientId: number) => {
     const response = await api.get(`/api/appointments/patient/${patientId}`);
     return response.data;
   },
-
   getAppointmentsByMedecin: async (medecinId: number) => {
     const response = await api.get(`/api/appointments/medecin/${medecinId}`);
     return response.data;
   },
-
-  updateAppointmentStatus: async (id: number, status: string) => {
+  createAppointment: async (appointment: any) => {
+    const response = await api.post('/api/appointments', appointment);
+    return response.data;
+  },
+  updateStatus: async (id: number, status: string) => {
     const response = await api.put(`/api/appointments/${id}/status?status=${status}`);
     return response.data;
   },
-
   deleteAppointment: async (id: number) => {
     await api.delete(`/api/appointments/${id}`);
   },
@@ -192,6 +189,21 @@ export const dossierService = {
 };
 
 export const medecinService = {
+  getAllMedecins: async () => {
+    const response = await api.get('/api/medecins');
+    return response.data;
+  },
+
+  getMedecinById: async (id: number) => {
+    const response = await api.get(`/api/medecins/${id}`);
+    return response.data;
+  },
+
+  getMedecinByUserId: async (userId: number) => {
+    const response = await api.get(`/api/medecins/user/${userId}`);
+    return response.data;
+  },
+
   createMedecin: async (medecinData: any) => {
     const response = await api.post('/api/medecins', medecinData);
     return response.data;
@@ -206,6 +218,31 @@ export const medecinService = {
     const response = await api.get(`/api/medecins/planning/medecin/${medecinId}`);
     return response.data;
   },
+
+  getDiagnosticsByDossier: async (dossierId: number) => {
+    const response = await api.get(`/api/medecins/diagnostics/dossier/${dossierId}`);
+    return response.data;
+  },
+
+  addDiagnostic: async (data: any) => {
+    const response = await api.post('/api/medecins/diagnostics', data);
+    return response.data;
+  },
+
+  getReportsByDossier: async (dossierId: number) => {
+    const response = await api.get(`/api/medecins/reports/dossier/${dossierId}`);
+    return response.data;
+  },
+
+  addReport: async (data: any) => {
+    const response = await api.post('/api/medecins/reports', data);
+    return response.data;
+  },
+
+  createPrescription: async (data: any) => {
+    const response = await api.post('/api/medecins/prescriptions', data);
+    return response.data;
+  }
 };
 
 export const prescriptionService = {

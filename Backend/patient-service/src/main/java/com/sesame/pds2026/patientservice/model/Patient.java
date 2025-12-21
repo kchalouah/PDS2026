@@ -1,22 +1,26 @@
 package com.sesame.pds2026.patientservice.model;
 
+import com.sesame.pds2026.patientservice.model.common.BaseEntity;
 import com.sesame.pds2026.patientservice.model.common.ProfileInfo;
-import jakarta.persistence.*; 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.io.Serializable;
+
 
 @Entity
-@Table(name = "patients")
 @Data
 @NoArgsConstructor
+@Getter
+@Setter
 @AllArgsConstructor
-public class Patient {
+@EqualsAndHashCode(callSuper = true)
+public class Patient extends BaseEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // Link to Keycloak user
+    private Long userId; // Link to Keycloak user ID
 
     private String nom;
     private String prenom;
@@ -33,4 +37,6 @@ public class Patient {
 
     @OneToOne(mappedBy = "patient", cascade = CascadeType.ALL)
     private DossierMedical dossierMedical;
+    
+
 }

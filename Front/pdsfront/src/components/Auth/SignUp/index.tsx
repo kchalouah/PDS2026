@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import SocialSignUp from "../SocialSignUp";
 import Logo from "@/components/Layout/Header/Logo"
-import { registerUser } from "@/lib/apiMock";
+import { userService } from "@/services/api";
 import { useContext, useState } from "react";
 import Loader from "@/components/Common/Loader";
 import AuthDialogContext from "@/app/context/AuthDialogContext";
@@ -13,34 +13,44 @@ const SignUp = ({ signUpOpen }: { signUpOpen?: any }) => {
     const [loading, setLoading] = useState(false);
     const authDialog = useContext(AuthDialogContext);
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = async (e: any) => {
         e.preventDefault();
-
         setLoading(true);
+
         const data = new FormData(e.currentTarget);
         const value = Object.fromEntries(data.entries());
-        const finalData = { ...value };
 
-        // Use client-side mock for registration (static export)
-        registerUser(finalData)
-            .then((data: any) => {
-                toast.success("Successfully registered");
-                setLoading(false);
-                router.push("/");
-            })
-            .catch((err: any) => {
-                toast.error(err?.message || "Registration failed");
-                setLoading(false);
-            });
-        setTimeout(() => {
-            signUpOpen(false);
-        }, 1200);
-        authDialog?.setIsUserRegistered(true);
+        // Map form data to API expectations
+        const finalData = {
+            username: value.name, // Mapping 'name' input to 'username'
+            email: value.email,
+            password: value.password,
+            role: value.role || 'PATIENT'
+        };
 
-        setTimeout(() => {
-            authDialog?.setIsUserRegistered(false);
-        }, 1100);
+        try {
+            await userService.createUser(finalData);
+            toast.success("Successfully registered! Please sign in.");
 
+            authDialog?.setIsUserRegistered(true);
+            setTimeout(() => {
+                authDialog?.setIsUserRegistered(false);
+                signUpOpen(false); // Close modal
+                // Optionally open sign in modal here if possible, or just let user click
+            }, 1500);
+
+            // Redirect to home or signin page?
+            // Since it's a modal, we might just close it.
+            // But if we want to enforce login, we could do nothing.
+            // Component logic had router.push("/")
+            // Let's keep it simple.
+
+        } catch (err: any) {
+            console.error("Registration failed", err);
+            toast.error(err.response?.data?.message || "Registration failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -59,6 +69,15 @@ const SignUp = ({ signUpOpen }: { signUpOpen?: any }) => {
             </span>
 
             <form onSubmit={handleSubmit}>
+                <div className="mb-[22px]">
+                    <select
+                        name="role"
+                        className="w-full rounded-md border border-border dark:border-dark_border border-solid bg-transparent px-5 py-3 text-base text-dark outline-none transition placeholder:text-gray-300 focus:border-primary focus-visible:shadow-none dark:text-white dark:focus:border-primary"
+                    >
+                        <option value="PATIENT" className="text-dark bg-white dark:text-white dark:bg-dark">Patient</option>
+                        <option value="MEDECIN" className="text-dark bg-white dark:text-white dark:bg-dark">Doctor</option>
+                    </select>
+                </div>
                 <div className="mb-[22px]">
                     <input
                         type="text"

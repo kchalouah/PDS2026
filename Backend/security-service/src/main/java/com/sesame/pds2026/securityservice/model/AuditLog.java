@@ -1,21 +1,23 @@
 package com.sesame.pds2026.securityservice.model;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
+
+import com.sesame.pds2026.securityservice.model.common.BaseEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.*;
+
 
 @Entity
 @Table(name = "audit_logs")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AuditLog {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+public class AuditLog extends BaseEntity {
+
 
     private String action; // LOGIN, LOGOUT, CREATE, UPDATE, DELETE, ACCESS
     private String entityType; // USER, PATIENT, DOSSIER, etc.
@@ -25,4 +27,6 @@ public class AuditLog {
     private LocalDateTime timestamp;
     private String ipAddress;
     private String details; // Additional context
+
+
 }

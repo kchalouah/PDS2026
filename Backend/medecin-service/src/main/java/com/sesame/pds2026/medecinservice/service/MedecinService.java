@@ -24,8 +24,20 @@ public class MedecinService {
     @Autowired
     private ReportRepository reportRepository;
 
+    public List<Medecin> getAllMedecins() {
+        return medecinRepository.findAll();
+    }
+
+    public Medecin getMedecinById(Long id) {
+        return medecinRepository.findById(id).orElse(null);
+    }
+
     public Medecin createMedecin(Medecin medecin) {
         return medecinRepository.save(medecin);
+    }
+
+    public Medecin getMedecinByUserId(Long userId) {
+        return medecinRepository.findByUserId(userId).orElse(null);
     }
 
     public Diagnostic addDiagnostic(Diagnostic diagnostic) {

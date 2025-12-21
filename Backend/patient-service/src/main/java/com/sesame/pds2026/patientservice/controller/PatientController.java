@@ -3,18 +3,17 @@ package com.sesame.pds2026.patientservice.controller;
 import com.sesame.pds2026.patientservice.model.Patient;
 import com.sesame.pds2026.patientservice.service.PatientService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/patients")
+@lombok.RequiredArgsConstructor
+@org.springframework.validation.annotation.Validated
 public class PatientController {
 
-    @Autowired
-    private PatientService patientService;
+    private final PatientService patientService;
 
     @PostMapping
     public Patient createPatient(@Valid @RequestBody Patient patient) {
@@ -31,8 +30,18 @@ public class PatientController {
         return patientService.getPatientById(id);
     }
 
+    @GetMapping("/search")
+    public List<Patient> searchPatients(@RequestParam String query) {
+        return patientService.searchPatients(query);
+    }
+
     @GetMapping("/user/{userId}")
     public Patient getPatientByUserId(@PathVariable Long userId) {
         return patientService.getPatientByUserId(userId);
+    }
+
+    @PutMapping("/{id}")
+    public Patient updatePatient(@PathVariable Long id, @RequestBody Patient patient) {
+        return patientService.updatePatient(id, patient);
     }
 }

@@ -1,20 +1,21 @@
 package com.sesame.pds2026.securityservice.model;
 
+import com.sesame.pds2026.securityservice.model.common.BaseEntity;
 import com.sesame.pds2026.securityservice.model.common.ProfileInfo;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 
 @Entity
 @Table(name = "responsables_securite")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResponsableSecurite {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+public class ResponsableSecurite extends BaseEntity {
+
 
     private Long userId; // Link to Keycloak user
 
@@ -30,4 +31,6 @@ public class ResponsableSecurite {
     // Security-specific fields
     private String clearanceLevel; // e.g., L1, L2, L3
     private String responsibilities;
+
+
 }

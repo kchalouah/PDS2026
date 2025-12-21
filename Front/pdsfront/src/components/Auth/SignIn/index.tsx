@@ -1,5 +1,5 @@
 "use client";
-import { signIn, useSession } from "@/lib/authMock";
+import { authService } from "@/services/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";
@@ -12,7 +12,8 @@ import AuthDialogContext from "@/app/context/AuthDialogContext";
 
 
 const Signin = ({ signInOpen }: { signInOpen?: any }) => {
-    const { data: session } = useSession();
+    const router = useRouter(); // Ensure router is initialized
+    // const { data: session } = useSession(); // Removed mock session
     const [username, setUsername] = useState("admin");
     const [password, setPassword] = useState("admin123");
     const [error, setError] = useState("");
@@ -21,28 +22,30 @@ const Signin = ({ signInOpen }: { signInOpen?: any }) => {
 
     const handleSubmit = async (e: any) => {
         e.preventDefault();
-        const result = await signIn("credentials", {
-            redirect: false,
-            username,
-            password,
-        });
-        if (result?.error) {
-            // Handle successful sign-in
-            setError(result.error);
-        }
-        if (result?.status === 200) {
-            setTimeout(() => {
-                signInOpen(false);
-            }, 1200);
+        setError(""); // Clear previous errors
+
+        try {
+            const response = await authService.login(username, password);
+
+            // Store token and user info
+            localStorage.setItem('medinsight_token', response.token);
+            localStorage.setItem('medinsight_user', JSON.stringify(response.user));
+
             authDialog?.setIsSuccessDialogOpen(true);
             setTimeout(() => {
                 authDialog?.setIsSuccessDialogOpen(false);
-            }, 1100);
-        } else {
+                signInOpen(false); // Close modal if open
+                router.push('/dashboard'); // Redirect to dashboard
+            }, 1000);
+
+        } catch (err: any) {
+            console.error("Login failed", err);
+            setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+
             authDialog?.setIsFailedDialogOpen(true);
             setTimeout(() => {
                 authDialog?.setIsFailedDialogOpen(false);
-            }, 1100);
+            }, 1500);
         }
     };
 

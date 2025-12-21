@@ -1,25 +1,27 @@
 package com.sesame.pds2026.medecinservice.model;
 
+import com.sesame.pds2026.medecinservice.model.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "diagnostics")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Diagnostic {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+public class Diagnostic extends BaseEntity {
 
     private Long dossierId; // Link to DossierMedical in Patient Service
     private Long medecinId; // Link to Medecin
 
     private String description;
+    private Boolean isAvailable;
+
     private LocalDateTime date;
+
+
 }

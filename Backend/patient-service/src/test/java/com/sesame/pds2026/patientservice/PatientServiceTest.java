@@ -1,19 +1,20 @@
 package com.sesame.pds2026.patientservice;
 
-import com.sesame.pds2026.patientservice.model.Patient;
-import com.sesame.pds2026.patientservice.Repository.PatientRepository;
-import com.sesame.pds2026.patientservice.service.PatientService;
+import java.time.LocalDate;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-
-import static org.mockito.ArgumentMatchers.any;
+import com.sesame.pds2026.patientservice.Repository.PatientRepository;
+import com.sesame.pds2026.patientservice.model.Patient;
+import com.sesame.pds2026.patientservice.model.common.ProfileInfo;
+import com.sesame.pds2026.patientservice.service.PatientService;
 
 @ExtendWith(MockitoExtension.class)
 public class PatientServiceTest {
@@ -30,7 +31,7 @@ public class PatientServiceTest {
         patient.setPrenom("John");
         patient.setNom("Doe");
         
-        com.sesame.pds2026.patientservice.model.common.ProfileInfo profile = new com.sesame.pds2026.patientservice.model.common.ProfileInfo();
+        ProfileInfo profile = new ProfileInfo();
         profile.setDateNaissance(LocalDate.of(1990, 1, 1));
         patient.setProfile(profile);
         

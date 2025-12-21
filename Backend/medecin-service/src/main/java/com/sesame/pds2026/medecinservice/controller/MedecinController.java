@@ -24,6 +24,21 @@ public class MedecinController {
         return medecinService.createMedecin(medecin);
     }
 
+    @GetMapping
+    public List<Medecin> getAllMedecins() {
+        return medecinService.getAllMedecins();
+    }
+
+    @GetMapping("/{id}")
+    public Medecin getMedecinById(@PathVariable Long id) {
+        return medecinService.getMedecinById(id);
+    }
+
+    @GetMapping("/user/{userId}")
+    public Medecin getMedecinByUserId(@PathVariable Long userId) {
+        return medecinService.getMedecinByUserId(userId);
+    }
+
     @PostMapping("/diagnostics")
     public Diagnostic addDiagnostic(@RequestBody Diagnostic diagnostic) {
         return medecinService.addDiagnostic(diagnostic);

@@ -25,4 +25,17 @@ public class ProfileInfo {
     
     private String telephone;
     private String telephoneSecondaire;
+
+    // Explicit Getters and Setters
+    public LocalDate getDateNaissance() { return dateNaissance; }
+    public void setDateNaissance(LocalDate dateNaissance) { this.dateNaissance = dateNaissance; }
+
+    public Adresse getAdresse() { return adresse; }
+    public void setAdresse(Adresse adresse) { this.adresse = adresse; }
+
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
+
+    public String getTelephoneSecondaire() { return telephoneSecondaire; }
+    public void setTelephoneSecondaire(String telephoneSecondaire) { this.telephoneSecondaire = telephoneSecondaire; }
 }

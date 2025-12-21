@@ -1,22 +1,21 @@
 package com.sesame.pds2026.medecinservice.model;
 
 import com.sesame.pds2026.medecinservice.model.common.ProfileInfo;
+import com.sesame.pds2026.medecinservice.model.common.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 
 @Entity
-@Table(name = "medecins")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Medecin {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+public class Medecin extends BaseEntity {
 
-    private Long userId; // Link to Keycloak user
+    private Long userId; // Link to Keycloak user ID
 
     private String nom;
     private String prenom;
@@ -32,4 +31,5 @@ public class Medecin {
     private String hospitalName;
     private String department;
     private boolean isAvailable = true;
+
 }

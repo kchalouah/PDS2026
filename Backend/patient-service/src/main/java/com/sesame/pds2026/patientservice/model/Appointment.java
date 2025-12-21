@@ -1,15 +1,17 @@
 package com.sesame.pds2026.patientservice.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "appointments")
 @Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Appointment {
@@ -17,9 +19,25 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
+    @NotNull
     private Long patientId;
+    @NotNull
     private Long medecinId;
-    private LocalDateTime date;
-    private String status; // SCHEDULED, COMPLETED, CANCELLED
+
+    @NotNull
+    @Future
+    private LocalDateTime startAt;
+
+    @NotNull
+    @Future
+    private LocalDateTime endAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private AppointmentStatus status = AppointmentStatus.REQUESTED;
+
     private String reason;
 }

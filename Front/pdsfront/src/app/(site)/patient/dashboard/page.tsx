@@ -2,179 +2,175 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { patientService, appointmentService, dossierService } from '@/services/api';
 import Link from 'next/link';
-import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import StatCard from '@/components/Dashboard/StatCard';
-import { appointmentService, dossierService } from '@/services/api';
+import { Toaster, toast } from 'react-hot-toast';
 
 export default function PatientDashboard() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
-    const [appointments, setAppointments] = useState<any[]>([]);
+    const [patient, setPatient] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [dossier, setDossier] = useState<any>(null);
 
     useEffect(() => {
-        const userStr = localStorage.getItem('medinsight_user');
-        if (userStr) {
-            const userData = JSON.parse(userStr);
-            setUser(userData);
-            loadPatientData(userData.id);
-        }
-    }, []);
+        const loadData = async () => {
+            try {
+                const userStr = localStorage.getItem('medinsight_user');
+                if (!userStr) {
+                    router.push('/login');
+                    return;
+                }
+                const user = JSON.parse(userStr);
 
-    const loadPatientData = async (userId: number) => {
-        try {
-            const allAppointments = await appointmentService.getAllAppointments();
-            // Filter appointments for this patient
-            setAppointments(allAppointments.slice(0, 3)); // Show only next 3
-        } catch (error) {
-            console.error('Erreur lors du chargement des données:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+                // Fetch Patient Profile using User ID
+                // Note: Ensure your backend has this endpoint working or user ID mapping is correct
+                // Assuming user.id corresponds to what the endpoint expects
+                const profile = await patientService.getPatientByUserId(user.id);
+                setPatient(profile);
 
-    const handleLogout = () => {
-        localStorage.removeItem('medinsight_token');
-        localStorage.removeItem('medinsight_user');
-        router.push('/connexion');
-    };
+                if (profile && profile.id) {
+                    // Fetch Appointments
+                    const appts = await appointmentService.getAppointmentsByPatient(profile.id);
+                    setAppointments(appts || []);
+
+                    // Fetch Dossier
+                    const dos = await dossierService.getDossierByPatientId(profile.id);
+                    setDossier(dos);
+                }
+
+            } catch (error) {
+                console.error("Failed to load patient data", error);
+                toast.error("Could not load dashboard data");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadData();
+    }, [router]);
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="flex h-screen items-center justify-center bg-gray-50">
+                <div className="h-16 w-16 animate-spin rounded-full border-4 border-solid border-primary border-t-transparent"></div>
             </div>
         );
     }
 
     return (
-        <ProtectedRoute allowedRoles={['PATIENT']}>
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-                {/* Header */}
-                <header className="bg-white shadow-sm border-b border-gray-200">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                        <div className="flex justify-between items-center">
+        <section className="pb-12 pt-24 lg:pb-24 lg:pt-32 bg-gray-50 min-h-screen">
+            <div className="container mx-auto px-4">
+                {/* Header Section */}
+                <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold text-dark dark:text-white">
+                            Hello, {patient?.nom ? `${patient.prenom} ${patient.nom}` : 'Patient'}
+                        </h1>
+                        <p className="mt-2 text-base text-body-color">
+                            Welcome to your health dashboard.
+                        </p>
+                    </div>
+                    <Link
+                        href="/patient/appointments/book"
+                        className="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3 text-center text-base font-medium text-white hover:bg-opacity-90 transition-all shadow-md hover:shadow-lg"
+                    >
+                        Book Appointment
+                    </Link>
+                </div>
+
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                    {/* Stat Card 1: Next Appointment */}
+                    <div className="rounded-xl bg-white p-8 shadow-sm hover:shadow-md transition-shadow dark:bg-dark-2">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-xl font-semibold text-dark dark:text-white">Next Appointment</h3>
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            </span>
+                        </div>
+                        {appointments.length > 0 ? (
+                            // Sort and pick first upcoming
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Mon Espace Patient</h1>
-                                <p className="text-sm text-gray-600">Bienvenue, {user?.username}</p>
+                                <p className="text-2xl font-bold text-dark dark:text-white mb-2">
+                                    {new Date(appointments[0].dateHeure).toLocaleDateString()}
+                                </p>
+                                <p className="text-body-color">
+                                    {new Date(appointments[0].dateHeure).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    <br />
+                                    <span className="text-sm">With Dr. [Fetch Name]</span>
+                                </p>
                             </div>
-                            <div className="flex items-center space-x-4">
-                                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                                    Patient
-                                </span>
-                                <button
-                                    onClick={handleLogout}
-                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                >
-                                    Déconnexion
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* Main Content */}
-                <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Quick Actions */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <Link
-                            href="/patient/rendez-vous"
-                            className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition-all transform hover:scale-105"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">Mes Rendez-vous</h3>
-                                <div className="p-3 bg-blue-100 rounded-full">
-                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <p className="text-sm text-gray-600">Consulter et gérer vos rendez-vous</p>
-                        </Link>
-
-                        <Link
-                            href="/patient/dossier"
-                            className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition-all transform hover:scale-105"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">Dossier Médical</h3>
-                                <div className="p-3 bg-green-100 rounded-full">
-                                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <p className="text-sm text-gray-600">Accéder à votre dossier médical</p>
-                        </Link>
-
-                        <Link
-                            href="/patient/medecins"
-                            className="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition-all transform hover:scale-105"
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">Trouver un Médecin</h3>
-                                <div className="p-3 bg-purple-100 rounded-full">
-                                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <p className="text-sm text-gray-600">Rechercher et prendre rendez-vous</p>
+                        ) : (
+                            <p className="text-body-color">No upcoming appointments.</p>
+                        )}
+                        <Link href="/patient/appointments" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
+                            View All &rarr;
                         </Link>
                     </div>
 
-                    {/* Upcoming Appointments */}
-                    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100 mb-8">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-gray-900">Prochains Rendez-vous</h2>
-                            <Link href="/patient/rendez-vous" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                                Voir tout →
-                            </Link>
+                    {/* Stat Card 2: Medical Record Status */}
+                    <div className="rounded-xl bg-white p-8 shadow-sm hover:shadow-md transition-shadow dark:bg-dark-2">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-xl font-semibold text-dark dark:text-white">My Records</h3>
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/10 text-secondary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            </span>
                         </div>
-                        <div className="space-y-4">
-                            {appointments.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <p className="mt-2 text-sm text-gray-500">Aucun rendez-vous à venir</p>
-                                    <Link href="/patient/rendez-vous" className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                                        Prendre un rendez-vous
-                                    </Link>
-                                </div>
-                            ) : (
-                                appointments.map((apt, index) => (
-                                    <div key={index} className="flex items-center p-4 bg-gray-50 rounded-lg">
-                                        <div className="flex-1">
-                                            <p className="text-sm font-medium text-gray-900">Rendez-vous #{apt.id}</p>
-                                            <p className="text-xs text-gray-500">{apt.dateAppointment} - {apt.heureDebut}</p>
-                                        </div>
-                                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                                            {apt.status}
-                                        </span>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                        <p className="text-3xl font-bold text-dark dark:text-white mb-1">
+                            {dossier ? 'Active' : 'Pending'}
+                        </p>
+                        <p className="text-sm text-body-color">
+                            Medical Dossier ID: {dossier?.id || 'N/A'}
+                        </p>
+                        <Link href="/patient/dossier" className="mt-6 inline-block text-sm font-medium text-secondary hover:underline">
+                            Access Records &rarr;
+                        </Link>
                     </div>
 
-                    {/* Health Tips */}
-                    <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Conseils Santé</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="p-4 bg-blue-50 rounded-lg">
-                                <h3 className="font-semibold text-blue-900 mb-2">💧 Hydratation</h3>
-                                <p className="text-sm text-blue-700">Buvez au moins 1,5L d'eau par jour</p>
+                    {/* Stat Card 3: Profile Info */}
+                    <div className="rounded-xl bg-white p-8 shadow-sm hover:shadow-md transition-shadow dark:bg-dark-2">
+                        <div className="mb-4 flex items-center justify-between">
+                            <h3 className="text-xl font-semibold text-dark dark:text-white">Profile</h3>
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 text-green-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </span>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-body-color">Phone:</span>
+                                <span className="font-medium text-dark dark:text-white">{patient?.telephone || 'Not set'}</span>
                             </div>
-                            <div className="p-4 bg-green-50 rounded-lg">
-                                <h3 className="font-semibold text-green-900 mb-2">🏃 Activité Physique</h3>
-                                <p className="text-sm text-green-700">30 minutes d'exercice quotidien recommandé</p>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-body-color">Email:</span>
+                                <span className="font-medium text-dark dark:text-white">{patient?.email || 'N/A'}</span>
+                            </div>
+                        </div>
+
+                        <Link href="/patient/profile" className="mt-6 inline-block text-sm font-medium text-green-600 hover:underline">
+                            Edit Profile &rarr;
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Recent Activity / History Section */}
+                <div className="mt-10 rounded-xl bg-white p-8 shadow-sm dark:bg-dark-2">
+                    <h2 className="mb-6 text-2xl font-bold text-dark dark:text-white">Recent Updates</h2>
+                    <div className="space-y-4">
+                        {/* Placeholder for notifications or recent actions */}
+                        <div className="flex items-start gap-4 border-b border-stroke pb-4 last:border-0 dark:border-dark-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">
+                                !
+                            </div>
+                            <div>
+                                <h4 className="text-base font-semibold text-dark dark:text-white">Welcome to MedInsight</h4>
+                                <p className="text-sm text-body-color">Your account has been successfully created. Please complete your profile.</p>
+                                <span className="text-xs text-body-color/70 mt-1 block">Just now</span>
                             </div>
                         </div>
                     </div>
-                </main>
+                </div>
+
             </div>
-        </ProtectedRoute>
+        </section>
     );
 }

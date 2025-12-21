@@ -2,15 +2,15 @@ package com.sesame.pds2026.gestionservice.model;
 
 import com.sesame.pds2026.gestionservice.model.common.ProfileInfo;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "gestionnaires")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class GestionnaireService {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,4 +30,6 @@ public class GestionnaireService {
     // Management-specific fields
     private String departement;
     private String serviceArea;
+
+
 }
