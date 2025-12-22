@@ -1,5 +1,5 @@
 "use client";
-import { authService } from "@/services/api";
+import { authService } from "@/services";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect, useState } from "react";

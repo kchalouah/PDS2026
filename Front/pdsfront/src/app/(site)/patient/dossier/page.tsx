@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { dossierService, patientService, prescriptionService, medecinService } from '@/services/api';
+import { dossierService, patientService, prescriptionService, medecinService } from '@/services';
 import { toast, Toaster } from 'react-hot-toast';
 
 export default function DossierPage() {

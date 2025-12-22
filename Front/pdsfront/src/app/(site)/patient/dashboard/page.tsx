@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { patientService, appointmentService, dossierService } from '@/services/api';
+import { patientService, appointmentService, dossierService } from '@/services';
 import Link from 'next/link';
 import { Toaster, toast } from 'react-hot-toast';
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import { auditService } from '@/services/api';
+import { auditService } from '@/services';
 
 export default function SecuriteAuditPage() {
     const router = useRouter();

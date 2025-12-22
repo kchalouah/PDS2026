@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import { appointmentService } from '@/services/api';
+import { appointmentService } from '@/services';
 
 export default function MedecinAgendaPage() {
     const router = useRouter();

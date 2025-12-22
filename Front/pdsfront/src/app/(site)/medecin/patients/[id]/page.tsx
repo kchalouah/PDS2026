@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { patientService, dossierService, medecinService, prescriptionService } from '@/services/api';
+import { patientService, dossierService, medecinService, prescriptionService } from '@/services';
 import { toast, Toaster } from 'react-hot-toast';
 
 export default function DoctorWorkstation() {
@@ -145,8 +145,8 @@ export default function DoctorWorkstation() {
                                 key={tab}
                                 onClick={() => setActiveTab(tab as any)}
                                 className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab
-                                        ? 'border-primary text-primary'
-                                        : 'border-transparent text-body-color hover:text-black hover:border-gray-300'
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent text-body-color hover:text-black hover:border-gray-300'
                                     } capitalize`}
                             >
                                 {tab}

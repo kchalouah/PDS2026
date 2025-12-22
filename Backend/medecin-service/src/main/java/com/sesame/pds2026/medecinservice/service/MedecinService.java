@@ -3,6 +3,7 @@ package com.sesame.pds2026.medecinservice.service;
 import com.sesame.pds2026.medecinservice.model.Diagnostic;
 import com.sesame.pds2026.medecinservice.model.Medecin;
 import com.sesame.pds2026.medecinservice.model.Report;
+import com.sesame.pds2026.medecinservice.model.common.ProfileInfo;
 import com.sesame.pds2026.medecinservice.repository.DiagnosticRepository;
 import com.sesame.pds2026.medecinservice.repository.MedecinRepository;
 import com.sesame.pds2026.medecinservice.repository.ReportRepository;
@@ -80,5 +81,47 @@ public class MedecinService {
 
     public List<Report> getReportsByDossier(Long dossierId) {
         return reportRepository.findByDossierId(dossierId);
+    }
+    public Medecin updateMedecin(Long id, Medecin medecinDetails) {
+        Medecin medecin = medecinRepository.findById(id).orElseThrow(() -> new RuntimeException("Medecin not found"));
+        medecin.setNom(medecinDetails.getNom());
+        medecin.setPrenom(medecinDetails.getPrenom());
+        medecin.setSpecialite(medecinDetails.getSpecialite());
+        // Telephone is part of embedded ProfileInfo — copy it safely if provided
+        ProfileInfo newProfile = medecinDetails.getProfile();
+        if (newProfile != null) {
+            if (medecin.getProfile() == null) {
+                medecin.setProfile(new ProfileInfo());
+            }
+            // copy fields that might be updated
+            medecin.getProfile().setTelephone(newProfile.getTelephone());
+            medecin.getProfile().setTelephoneSecondaire(newProfile.getTelephoneSecondaire());
+            medecin.getProfile().setDateNaissance(newProfile.getDateNaissance());
+            medecin.getProfile().setAdresse(newProfile.getAdresse());
+        }
+        // Update other simple fields
+        medecin.setEmail(medecinDetails.getEmail());
+        medecin.setHospitalName(medecinDetails.getHospitalName());
+        medecin.setDepartment(medecinDetails.getDepartment());
+        // `Medecin` boolean field is named `isAvailable` so Lombok generates
+        // `isAvailable()` and `setAvailable(boolean)` methods.
+        medecin.setAvailable(medecinDetails.isAvailable());
+        // Update other fields as necessary
+        return medecinRepository.save(medecin);
+    }
+
+    public void deleteMedecin(Long id) {
+        medecinRepository.deleteById(id);
+    }
+
+    // Sub-entity deletions
+    public void deleteDiagnostic(Long id) {
+        diagnosticRepository.deleteById(id);
+    }
+    public void deleteReport(Long id) {
+        reportRepository.deleteById(id);
+    }
+    public void deletePrescription(Long id) {
+        prescriptionRepository.deleteById(id);
     }
 }

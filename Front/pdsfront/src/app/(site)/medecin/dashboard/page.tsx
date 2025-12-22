@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { appointmentService, medecinService, predictionService } from '@/services/api';
+import { appointmentService, medecinService, predictionService } from '@/services';
 import { toast, Toaster } from 'react-hot-toast';
 
 export default function MedecinDashboard() {

@@ -38,4 +38,7 @@ public class SecurityOfficerService {
         }
         return null;
     }
+    public void deleteSecurityOfficer(Long id) {
+        securityOfficerRepository.deleteById(id);
+    }
 }

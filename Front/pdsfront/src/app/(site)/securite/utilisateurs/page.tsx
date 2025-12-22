@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import { userService } from '@/services/api';
+import { userService } from '@/services';
 
 export default function SecuriteUtilisateursPage() {
     const router = useRouter();

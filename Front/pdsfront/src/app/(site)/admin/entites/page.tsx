@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import { patientService, appointmentService, dossierService } from '@/services/api';
+import { patientService, appointmentService, dossierService } from '@/services';
 
 export default function AdminEntitesPage() {
     const router = useRouter();

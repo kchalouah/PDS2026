@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { patientService } from '@/services/api';
+import { patientService } from '@/services';
 
 interface Patient {
     id: number;

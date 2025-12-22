@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import StatCard from '@/components/Dashboard/StatCard';
-import { auditService, userService } from '@/services/api';
+import { auditService, userService } from '@/services';
 
 export default function SecuriteDashboard() {
     const router = useRouter();

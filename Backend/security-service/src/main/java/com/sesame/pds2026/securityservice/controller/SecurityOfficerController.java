@@ -38,4 +38,8 @@ public class SecurityOfficerController {
     public SecurityOfficer updateSecurityOfficer(@PathVariable Long id, @RequestBody SecurityOfficer officer) {
         return securityOfficerService.updateSecurityOfficer(id, officer);
     }
+    @DeleteMapping("/{id}")
+    public void deleteSecurityOfficer(@PathVariable Long id) {
+        securityOfficerService.deleteSecurityOfficer(id);
+    }
 }

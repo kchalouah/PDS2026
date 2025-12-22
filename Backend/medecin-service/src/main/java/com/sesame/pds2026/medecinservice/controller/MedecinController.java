@@ -39,6 +39,16 @@ public class MedecinController {
         return medecinService.getMedecinByUserId(userId);
     }
 
+    @PutMapping("/{id}")
+    public Medecin updateMedecin(@PathVariable Long id, @RequestBody Medecin medecin) {
+        return medecinService.updateMedecin(id, medecin);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteMedecin(@PathVariable Long id) {
+        medecinService.deleteMedecin(id);
+    }
+
     @PostMapping("/diagnostics")
     public Diagnostic addDiagnostic(@RequestBody Diagnostic diagnostic) {
         return medecinService.addDiagnostic(diagnostic);
@@ -82,5 +92,20 @@ public class MedecinController {
     @GetMapping("/reports/dossier/{dossierId}")
     public List<Report> getReportsByDossier(@PathVariable Long dossierId) {
         return medecinService.getReportsByDossier(dossierId);
+    }
+
+    @DeleteMapping("/diagnostics/{id}")
+    public void deleteDiagnostic(@PathVariable Long id) {
+        medecinService.deleteDiagnostic(id);
+    }
+
+    @DeleteMapping("/reports/{id}")
+    public void deleteReport(@PathVariable Long id) {
+        medecinService.deleteReport(id);
+    }
+
+    @DeleteMapping("/prescriptions/{id}")
+    public void deletePrescription(@PathVariable Long id) {
+        medecinService.deletePrescription(id);
     }
 }

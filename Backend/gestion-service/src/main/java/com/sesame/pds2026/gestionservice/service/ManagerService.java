@@ -38,4 +38,7 @@ public class ManagerService {
         }
         return null;
     }
+    public void deleteManager(Long id) {
+        managerRepository.deleteById(id);
+    }
 }

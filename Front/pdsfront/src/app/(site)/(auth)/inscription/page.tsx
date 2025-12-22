@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { userService } from '@/services/api';
+import { userService } from '@/services';
 
 export default function InscriptionPage() {
     const router = useRouter();

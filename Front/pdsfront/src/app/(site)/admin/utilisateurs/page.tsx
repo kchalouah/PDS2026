@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import { userService } from '@/services/api';
+import { userService } from '@/services';
 
 export default function AdminUtilisateursPage() {
     const router = useRouter();
@@ -132,6 +132,18 @@ export default function AdminUtilisateursPage() {
                                         <option value="SECURITY_OFFICER">Sécurité</option>
                                     </select>
                                 </div>
+                                <button
+                                    onClick={() => {
+                                        setSelectedUser(null);
+                                        setShowModal(true);
+                                    }}
+                                    className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                                >
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Ajouter un utilisateur
+                                </button>
                             </div>
                         </div>
 
@@ -172,7 +184,25 @@ export default function AdminUtilisateursPage() {
                                             >
                                                 Modifier
                                             </button>
-                                            <button className="text-red-600 hover:text-red-900">
+                                            <button
+                                                onClick={async () => {
+                                                    if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+                                                        try {
+                                                            // Dynamically call delete service based on role
+                                                            const { medecinService, patientService, gestionService, securityService } = require('@/services/api');
+                                                            if (user.role === 'MEDECIN') await medecinService.deleteMedecin(user.id);
+                                                            else if (user.role === 'PATIENT') await patientService.deletePatient(user.id);
+                                                            else if (user.role === 'MANAGER') await gestionService.deleteManager(user.id);
+                                                            else if (user.role === 'SECURITY_OFFICER') await securityService.deleteOfficer(user.id);
+
+                                                            loadUsers();
+                                                        } catch (e) {
+                                                            alert('Erreur lors de la suppression');
+                                                        }
+                                                    }
+                                                }}
+                                                className="text-red-600 hover:text-red-900"
+                                            >
                                                 Supprimer
                                             </button>
                                         </td>
@@ -184,5 +214,193 @@ export default function AdminUtilisateursPage() {
                 </main>
             </div>
         </ProtectedRoute>
+    );
+                    </div >
+                </main >
+
+        {/* User Modal */ }
+    {
+        showModal && (
+            <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => setShowModal(false)}></div>
+                    <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                    <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                        <UserFormModal
+                            onClose={() => setShowModal(false)}
+                            onSuccess={() => {
+                                setShowModal(false);
+                                loadUsers();
+                            }}
+                            userToEdit={selectedUser}
+                        />
+                    </div>
+                </div>
+            </div>
+        )
+    }
+            </div >
+        </ProtectedRoute >
+    );
+}
+
+// Sub-component for the Form (usually strictly in separate file but inline for now for context)
+function UserFormModal({ onClose, onSuccess, userToEdit }: { onClose: () => void, onSuccess: () => void, userToEdit: any }) {
+    const [role, setRole] = useState(userToEdit?.role || 'PATIENT');
+    const [formData, setFormData] = useState({
+        username: userToEdit?.username || '',
+        email: userToEdit?.email || '',
+        password: '',
+        nom: userToEdit?.nom || '',
+        prenom: userToEdit?.prenom || '',
+        // Medecin specific
+        specialite: userToEdit?.specialite || '',
+        hospitalName: userToEdit?.hospitalName || '',
+        // Manager specific
+        department: userToEdit?.department || '',
+    });
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            // Determine service based on role
+            // NOTE: In a real scenario, we might need separate "Create User" endpoints for purely Auth, 
+            // but here we are creating Entities which create Auth users implicitly (Microservice pattern).
+            const payload = { ...formData, role };
+
+            // TODO: Call specific service based on role
+            // Example:
+            // if (role === 'MEDECIN') await medecinService.createMedecin(payload);
+            // else if (role === 'PATIENT') await patientService.createPatient(payload);
+            // etc.
+
+            // For now, logging payload to simulate
+            console.log('Creating user:', payload);
+
+            // We need to import services inside or passing them. 
+            // Assuming services are imported at top of file.
+            const { medecinService, patientService, gestionService, securityService } = require('@/services/api');
+
+            if (role === 'MEDECIN') {
+                await medecinService.createMedecin(payload);
+            } else if (role === 'PATIENT') {
+                await patientService.createPatient(payload);
+            } else if (role === 'MANAGER') {
+                await gestionService.createManager(payload);
+            } else if (role === 'SECURITY_OFFICER') {
+                await securityService.createOfficer(payload);
+            }
+
+            onSuccess();
+        } catch (error) {
+            console.error('Error creating user:', error);
+            alert('Erreur lors de la création de l\'utilisateur');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                {userToEdit ? 'Modifier Utilisateur' : 'Nouvel Utilisateur'}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                {!userToEdit && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Rôle</label>
+                        <select
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        >
+                            <option value="PATIENT">Patient</option>
+                            <option value="MEDECIN">Médecin</option>
+                            <option value="MANAGER">Manager</option>
+                            <option value="SECURITY_OFFICER">Agent de Sécurité</option>
+                        </select>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Nom</label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.nom}
+                            onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Prénom</label>
+                        <input
+                            type="text"
+                            required
+                            value={formData.prenom}
+                            onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                </div>
+
+                {!userToEdit && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
+                        <input
+                            type="password"
+                            required
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                    </div>
+                )}
+
+                {/* Role Specific Fields */}
+                {role === 'MEDECIN' && (
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Spécialité</label>
+                        <input
+                            type="text"
+                            value={formData.specialite}
+                            onChange={(e) => setFormData({ ...formData, specialite: e.target.value })}
+                            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        />
+                    </div>
+                )}
+
+                <div className="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm"
+                    >
+                        {loading ? 'Chargement...' : (userToEdit ? 'Modifier' : 'Créer')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                    >
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
     );
 }

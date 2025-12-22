@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class PatientService {
 
     private final PatientRepository patientRepository;
@@ -87,5 +87,12 @@ public class PatientService {
         }
 
         return patientRepository.save(existing);
+    }
+    @Transactional
+    public void deletePatient(Long id) {
+        if (!patientRepository.existsById(id)) {
+            throw new NotFoundException("Patient not found: " + id);
+        }
+        patientRepository.deleteById(id);
     }
 }

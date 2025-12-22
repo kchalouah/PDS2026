@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import StatCard from '@/components/Dashboard/StatCard';
-import { userService, patientService, appointmentService } from '@/services/api';
+import { userService, patientService, appointmentService } from '@/services';
 
 export default function AdminDashboard() {
     const router = useRouter();

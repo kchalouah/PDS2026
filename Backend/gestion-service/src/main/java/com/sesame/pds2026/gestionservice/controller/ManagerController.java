@@ -38,4 +38,8 @@ public class ManagerController {
     public Manager updateManager(@PathVariable Long id, @RequestBody Manager manager) {
         return managerService.updateManager(id, manager);
     }
+    @DeleteMapping("/{id}")
+    public void deleteManager(@PathVariable Long id) {
+        managerService.deleteManager(id);
+    }
 }
