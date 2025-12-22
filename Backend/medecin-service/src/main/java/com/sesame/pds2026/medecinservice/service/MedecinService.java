@@ -103,7 +103,7 @@ public class MedecinService {
         medecin.setEmail(medecinDetails.getEmail());
         medecin.setHospitalName(medecinDetails.getHospitalName());
         medecin.setDepartment(medecinDetails.getDepartment());
-        // `Medecin` boolean field is named `isAvailable` so Lombok generates
+         // `Medecin` boolean field is named `isAvailable` so Lombok generates
         // `isAvailable()` and `setAvailable(boolean)` methods.
         medecin.setAvailable(medecinDetails.isAvailable());
         // Update other fields as necessary

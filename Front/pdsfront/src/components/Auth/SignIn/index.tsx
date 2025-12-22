@@ -25,17 +25,26 @@ const Signin = ({ signInOpen }: { signInOpen?: any }) => {
         setError(""); // Clear previous errors
 
         try {
-            const response = await authService.login(username, password);
+            const response = await authService.login({ username, password });
 
             // Store token and user info
             localStorage.setItem('medinsight_token', response.token);
             localStorage.setItem('medinsight_user', JSON.stringify(response.user));
 
             authDialog?.setIsSuccessDialogOpen(true);
+
+            // Role-based redirection
+            const redirectPath =
+                response.user.role === 'PATIENT' ? '/patient/dashboard' :
+                    response.user.role === 'MEDECIN' ? '/medecin/dashboard' :
+                        response.user.role === 'ADMIN' || response.user.role === 'MANAGER' ? '/admin/dashboard' :
+                            response.user.role === 'SECURITY_OFFICER' || response.user.role === 'RESPONSABLE_SECURITE' ? '/securite/dashboard' :
+                                '/dashboard';
+
             setTimeout(() => {
                 authDialog?.setIsSuccessDialogOpen(false);
                 signInOpen(false); // Close modal if open
-                router.push('/dashboard'); // Redirect to dashboard
+                window.location.href = redirectPath; // Force reload to update header menu
             }, 1000);
 
         } catch (err: any) {

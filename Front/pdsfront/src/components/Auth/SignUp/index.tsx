@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import SocialSignUp from "../SocialSignUp";
 import Logo from "@/components/Layout/Header/Logo"
-import { userService } from "@/services";
+import { authService } from "@/services";
 import { useContext, useState } from "react";
 import Loader from "@/components/Common/Loader";
 import AuthDialogContext from "@/app/context/AuthDialogContext";
+
 const SignUp = ({ signUpOpen }: { signUpOpen?: any }) => {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
@@ -22,28 +23,21 @@ const SignUp = ({ signUpOpen }: { signUpOpen?: any }) => {
 
         // Map form data to API expectations
         const finalData = {
-            username: value.name, // Mapping 'name' input to 'username'
-            email: value.email,
-            password: value.password,
-            role: value.role || 'PATIENT'
+            username: value.name as string,
+            email: value.email as string,
+            password: value.password as string,
+            role: (value.role as string) || 'PATIENT'
         };
 
         try {
-            await userService.createUser(finalData);
+            await authService.register(finalData);
             toast.success("Successfully registered! Please sign in.");
 
             authDialog?.setIsUserRegistered(true);
             setTimeout(() => {
                 authDialog?.setIsUserRegistered(false);
                 signUpOpen(false); // Close modal
-                // Optionally open sign in modal here if possible, or just let user click
             }, 1500);
-
-            // Redirect to home or signin page?
-            // Since it's a modal, we might just close it.
-            // But if we want to enforce login, we could do nothing.
-            // Component logic had router.push("/")
-            // Let's keep it simple.
 
         } catch (err: any) {
             console.error("Registration failed", err);
