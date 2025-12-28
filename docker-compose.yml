@@ -314,7 +314,9 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HOSTNAME_STRICT: "false"
-    command: start-dev
+    volumes:
+      - ./infra/keycloak/realm.json:/opt/keycloak/data/import/realm.json
+    command: start-dev --import-realm
     ports:
       - "8180:8080"
     depends_on:
@@ -399,6 +401,8 @@ services:
       - PATIENT_SERVICE_URL=http://patient-service:8080
       - MEDECIN_SERVICE_URL=http://medecin-service:8080
       - GESTION_SERVICE_URL=http://gestion-service:8080
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
     ports:
       - "5173:3000"
     depends_on:

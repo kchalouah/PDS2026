@@ -15,7 +15,7 @@ const Signin = ({ signInOpen }: { signInOpen?: any }) => {
     const router = useRouter(); // Ensure router is initialized
     // const { data: session } = useSession(); // Removed mock session
     const [username, setUsername] = useState("admin");
-    const [password, setPassword] = useState("admin123");
+    const [password, setPassword] = useState("admin");
     const [error, setError] = useState("");
     const authDialog = useContext(AuthDialogContext);
 

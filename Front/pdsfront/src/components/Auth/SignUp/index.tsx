@@ -21,12 +21,12 @@ const SignUp = ({ signUpOpen }: { signUpOpen?: any }) => {
         const data = new FormData(e.currentTarget);
         const value = Object.fromEntries(data.entries());
 
-        // Map form data to API expectations
+        // Map form data to API expectations - all new users are PATIENT by default
         const finalData = {
             username: value.name as string,
             email: value.email as string,
             password: value.password as string,
-            role: (value.role as string) || 'PATIENT'
+            role: 'PATIENT' // Always PATIENT - admin can change later
         };
 
         try {
@@ -63,15 +63,6 @@ const SignUp = ({ signUpOpen }: { signUpOpen?: any }) => {
             </span>
 
             <form onSubmit={handleSubmit}>
-                <div className="mb-[22px]">
-                    <select
-                        name="role"
-                        className="w-full rounded-md border border-border dark:border-dark_border border-solid bg-transparent px-5 py-3 text-base text-dark outline-none transition placeholder:text-gray-300 focus:border-primary focus-visible:shadow-none dark:text-white dark:focus:border-primary"
-                    >
-                        <option value="PATIENT" className="text-dark bg-white dark:text-white dark:bg-dark">Patient</option>
-                        <option value="MEDECIN" className="text-dark bg-white dark:text-white dark:bg-dark">Doctor</option>
-                    </select>
-                </div>
                 <div className="mb-[22px]">
                     <input
                         type="text"

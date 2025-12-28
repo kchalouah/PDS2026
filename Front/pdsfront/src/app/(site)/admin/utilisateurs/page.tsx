@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/Auth/ProtectedRoute';
 import { userService } from '@/services';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function AdminUtilisateursPage() {
     const router = useRouter();
@@ -19,12 +20,82 @@ export default function AdminUtilisateursPage() {
 
     const loadUsers = async () => {
         try {
-            const data = await userService.getAllUsers();
+            const response = await fetch('/api/admin/users');
+            if (!response.ok) throw new Error('Failed to fetch users');
+            const data = await response.json();
             setUsers(data);
         } catch (error) {
             console.error('Erreur lors du chargement des utilisateurs:', error);
+            toast.error('Erreur lors du chargement des utilisateurs');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRoleChange = async (userId: string, username: string, newRole: string) => {
+        try {
+            const response = await fetch('/api/admin/change-role', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, newRole })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to change role');
+            }
+
+            toast.success(`Rôle de ${username} changé en ${newRole}`);
+            loadUsers(); // Reload users to show updated role
+        } catch (error: any) {
+            console.error('Error changing role:', error);
+            toast.error(error.message || 'Erreur lors du changement de rôle');
+        }
+    };
+
+    const handleDeleteUser = async (userId: string, username: string) => {
+        if (!confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${username} ?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/admin/users?userId=${userId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to delete user');
+            }
+
+            toast.success(`Utilisateur ${username} supprimé`);
+            loadUsers();
+        } catch (error: any) {
+            console.error('Error deleting user:', error);
+            toast.error(error.message || 'Erreur lors de la suppression');
+        }
+    };
+
+    const handleUpdateUser = async (userData: any) => {
+        try {
+            const response = await fetch('/api/admin/users', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to update user');
+            }
+
+            toast.success('Utilisateur mis à jour');
+            setShowModal(false);
+            setSelectedUser(null);
+            loadUsers();
+        } catch (error: any) {
+            console.error('Error updating user:', error);
+            toast.error(error.message || 'Erreur lors de la mise à jour');
         }
     };
 
@@ -167,9 +238,17 @@ export default function AdminUtilisateursPage() {
                                             <div className="text-sm text-gray-500">{user.email}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
-                                                {user.role}
-                                            </span>
+                                            <select
+                                                value={user.role}
+                                                onChange={(e) => handleRoleChange(user.sub || user.id, user.username, e.target.value)}
+                                                className={`px-2 py-1 text-xs font-semibold rounded border-0 cursor-pointer ${getRoleBadgeColor(user.role)}`}
+                                            >
+                                                <option value="PATIENT">PATIENT</option>
+                                                <option value="MEDECIN">MEDECIN</option>
+                                                <option value="ADMIN">ADMIN</option>
+                                                <option value="MANAGER">MANAGER</option>
+                                                <option value="SECURITY_OFFICER">SECURITY_OFFICER</option>
+                                            </select>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.provider}</td>
                                         <td className="px-6 py-4 whitespace-nowrap">

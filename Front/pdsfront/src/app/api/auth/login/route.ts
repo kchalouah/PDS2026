@@ -86,14 +86,41 @@ export async function POST(request: Request) {
             numericId = Math.abs(hash);
         }
 
+        // Decode JWT to extract roles
+        let userRole = 'PATIENT'; // Default role
+        try {
+            // JWT is base64 encoded, split by '.' and decode the payload (middle part)
+            const tokenParts = data.access_token.split('.');
+            if (tokenParts.length === 3) {
+                const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+
+                // Keycloak stores roles in realm_access.roles
+                if (payload.realm_access && payload.realm_access.roles) {
+                    const roles = payload.realm_access.roles;
+
+                    // Priority order: check for specific roles
+                    if (roles.includes('ADMIN')) userRole = 'ADMIN';
+                    else if (roles.includes('MEDECIN')) userRole = 'MEDECIN';
+                    else if (roles.includes('MANAGER')) userRole = 'MANAGER';
+                    else if (roles.includes('SECURITY_OFFICER') || roles.includes('RESPONSABLE_SECURITE')) userRole = 'SECURITY_OFFICER';
+                    else if (roles.includes('PATIENT')) userRole = 'PATIENT';
+
+                    console.log(`[Login Debug] Extracted roles:`, roles, `Selected role: ${userRole}`);
+                }
+            }
+        } catch (e) {
+            console.error('[Login Debug] Failed to decode JWT for roles:', e);
+        }
+
         return NextResponse.json({
             token: data.access_token,
             refreshToken: data.refresh_token,
             user: {
                 username,
-                email: userInfo.email,
+                email: userInfo.email || username,
                 id: numericId,
-                sub: userInfo.sub
+                sub: userInfo.sub,
+                role: userRole
             }
         });
 
