@@ -9,7 +9,7 @@ import java.util.Optional;
 
 @Repository
 public interface PatientRepository extends JpaRepository<Patient, Long> {
-    Optional<Patient> findByUserId(Long userId);
+    Optional<Patient> findByUserId(String userId);
 
     // Search by name (case insensitive usually requires IgnoreCase, but let's keep it simple first or use query annotation if needed, but standard JPA keywords keycloak is standard)
     // Actually, let's use ContainingIgnoreCase for better UX

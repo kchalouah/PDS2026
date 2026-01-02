@@ -1,4 +1,4 @@
-import { api, localApi } from './apiConfig';
+import { localApi } from '@/lib/api';
 
 export const authService = {
     login: async (credentials: { username: string; password: string }) => {
@@ -12,7 +12,9 @@ export const authService = {
     },
 
     logout: () => {
-        localStorage.removeItem('medinsight_token');
-        localStorage.removeItem('medinsight_user');
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('medinsight_token');
+            localStorage.removeItem('medinsight_user');
+        }
     },
 };

@@ -44,7 +44,7 @@ public class PatientService {
                 .orElseThrow(() -> new NotFoundException("Patient not found: " + id));
     }
 
-    public Patient getPatientByUserId(Long userId) {
+    public Patient getPatientByUserId(String userId) {
         return patientRepository.findByUserId(userId)
                 .orElseThrow(() -> new NotFoundException("Patient not found for user: " + userId));
     }

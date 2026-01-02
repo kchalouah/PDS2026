@@ -20,7 +20,7 @@ public class Patient extends BaseEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId; // Link to Keycloak user ID
+    private String userId; // Link to Keycloak user ID
 
     private String nom;
     private String prenom;

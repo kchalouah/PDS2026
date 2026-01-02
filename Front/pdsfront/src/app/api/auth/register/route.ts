@@ -2,14 +2,30 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     const body = await request.json();
-    const { username, email, password, role } = body;
+
+    // Extract all fields from the registration form
+    const {
+        username,
+        nom,
+        prenom,
+        email,
+        password,
+        dateNaissance,
+        gender,
+        telephone,
+        emergencyContact,
+        rue,
+        ville,
+        codePostal,
+        pays
+    } = body;
 
     const KEYCLOAK_URL = process.env.KEYCLOAK_URL || 'http://localhost:8180';
     const REALM = 'medinsight';
     const ADMIN_USERNAME = process.env.KEYCLOAK_ADMIN || 'admin';
     const ADMIN_PASSWORD = process.env.KEYCLOAK_ADMIN_PASSWORD || 'admin';
 
-    console.log(`[Register Debug] Attempting registration for ${username} with role ${role}`);
+    console.log(`[Register Debug] Attempting registration for ${username} (${email})`);
 
     try {
         // Step 1: Get admin access token
@@ -29,7 +45,7 @@ export async function POST(request: Request) {
             const errorText = await adminTokenRes.text();
             console.error('[Register Debug] Admin token error:', errorText);
             return NextResponse.json(
-                { message: 'Failed to authenticate with identity provider' },
+                { error: 'Failed to authenticate with identity provider' },
                 { status: 500 }
             );
         }
@@ -41,13 +57,25 @@ export async function POST(request: Request) {
         const newUser = {
             username,
             email,
+            firstName: prenom,
+            lastName: nom,
             enabled: true,
             emailVerified: true,
             credentials: [{
                 type: 'password',
                 value: password,
                 temporary: false
-            }]
+            }],
+            attributes: {
+                dateNaissance: [dateNaissance],
+                gender: [gender],
+                telephone: [telephone],
+                emergencyContact: [emergencyContact],
+                rue: [rue],
+                ville: [ville],
+                codePostal: [codePostal],
+                pays: [pays]
+            }
         };
 
         const createUserRes = await fetch(`${KEYCLOAK_URL}/admin/realms/${REALM}/users`, {
@@ -66,13 +94,13 @@ export async function POST(request: Request) {
             // Check if user already exists
             if (createUserRes.status === 409) {
                 return NextResponse.json(
-                    { message: 'Username or email already exists' },
+                    { error: 'Un utilisateur avec cet email existe déjà' },
                     { status: 409 }
                 );
             }
 
             return NextResponse.json(
-                { message: 'Failed to create user' },
+                { error: 'Échec de création du compte' },
                 { status: createUserRes.status }
             );
         }
@@ -88,7 +116,7 @@ export async function POST(request: Request) {
         if (!getUserRes.ok) {
             console.error('[Register Debug] Failed to fetch created user');
             return NextResponse.json(
-                { message: 'User created but role assignment failed' },
+                { error: 'Utilisateur créé mais attribution du rôle échouée' },
                 { status: 500 }
             );
         }
@@ -97,15 +125,15 @@ export async function POST(request: Request) {
         if (!users || users.length === 0) {
             console.error('[Register Debug] User not found after creation');
             return NextResponse.json(
-                { message: 'User created but role assignment failed' },
+                { error: 'Utilisateur créé mais attribution du rôle échouée' },
                 { status: 500 }
             );
         }
 
         const userId = users[0].id;
 
-        // Step 4: Assign role to user
-        const roleToAssign = role || 'PATIENT';
+        // Step 4: Assign PATIENT role to user (default role for registration)
+        const roleToAssign = 'PATIENT';
 
         // Get the role ID from Keycloak
         const getRoleRes = await fetch(
@@ -118,7 +146,8 @@ export async function POST(request: Request) {
         if (!getRoleRes.ok) {
             console.warn(`[Register Debug] Role ${roleToAssign} not found, user created without role`);
             return NextResponse.json({
-                message: 'User created successfully',
+                success: true,
+                message: 'Compte créé avec succès',
                 username,
                 email
             });
@@ -146,8 +175,49 @@ export async function POST(request: Request) {
 
         console.log(`[Register Debug] User ${username} created successfully with role ${roleToAssign}`);
 
+        // Step 5: Create patient record in backend (call patient-service)
+        try {
+            const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://localhost:8081';
+            const patientPayload = {
+                nom,
+                prenom,
+                email,
+                dateNaissance,
+                gender,
+                telephone,
+                emergencyContact,
+                adresse: {
+                    rue,
+                    ville,
+                    codePostal,
+                    pays
+                },
+                // Store Keycloak user ID for future reference
+                keycloakUserId: userId
+            };
+
+            const patientRes = await fetch(`${patientServiceUrl}/api/patients`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(patientPayload)
+            });
+
+            if (!patientRes.ok) {
+                console.error('[Register Debug] Failed to create patient record in backend');
+                // Don't fail the registration, just log the error
+            } else {
+                console.log('[Register Debug] Patient record created in backend');
+            }
+        } catch (err) {
+            console.error('[Register Debug] Error creating patient record:', err);
+            // Don't fail the registration
+        }
+
         return NextResponse.json({
-            message: 'User registered successfully',
+            success: true,
+            message: 'Compte créé avec succès',
             username,
             email,
             role: roleToAssign
@@ -156,7 +226,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error('[Register Debug] Internal Exception:', error);
         return NextResponse.json(
-            { message: 'Internal Server Error', error: error.toString() },
+            { error: 'Erreur interne du serveur', details: error.toString() },
             { status: 500 }
         );
     }

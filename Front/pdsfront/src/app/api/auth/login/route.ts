@@ -60,13 +60,10 @@ export async function POST(request: Request) {
         const userInfoText = await userInfoRes.text();
         if (!userInfoRes.ok) {
             console.error('[Login Debug] User Info Error:', userInfoText);
-            // Fallback: if userinfo fails, still return token but with random ID? 
-            // Or fail? Better to fail or warn.
-            // Let's return token but warn.
             console.warn('Could not fetch user info for ID mapping');
         }
 
-        let userInfo = {};
+        let userInfo: any = {};
         try {
             userInfo = userInfoText ? JSON.parse(userInfoText) : {};
         } catch (e) {
@@ -115,6 +112,8 @@ export async function POST(request: Request) {
         return NextResponse.json({
             token: data.access_token,
             refreshToken: data.refresh_token,
+            username,
+            role: userRole,
             user: {
                 username,
                 email: userInfo.email || username,
